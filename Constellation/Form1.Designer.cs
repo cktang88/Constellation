@@ -66,7 +66,7 @@
         	// tmr_main
         	// 
         	this.tmr_main.Enabled = true;
-        	this.tmr_main.Interval = 40;
+        	this.tmr_main.Interval = 50;
         	this.tmr_main.Tick += new System.EventHandler(this.tmr_main_Tick);
         	// 
         	// menuStrip1

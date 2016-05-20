@@ -32,6 +32,9 @@ namespace Constellation
 			Random r = new Random(); 
 			this.boardtype = boardtype; 
 			this.Numplayers = Numplayers;
+			
+			//========setup a good game screen to fit device
+			gameWorld = new Rectangle(40, 40, 1200, 650);
 
             if(Numplayers < 2)
             players.Add(new AI("Ares", Color.Yellow, buildTickInterval, mainTickInterval, this.gameWorld));
@@ -45,8 +48,7 @@ namespace Constellation
             if(Numplayers==2)
             players.Add(new Player("Hulk", Color.Green, this.gameWorld));
 
-			//========setup a good game screen end fit device
-			gameWorld = new Rectangle(40, 40, 1200, 650);
+			
 
             Point midpoint = new Point((gameWorld.X + gameWorld.Width) / 2, 
 			                           (gameWorld.Y + gameWorld.Height) / 2);
@@ -58,8 +60,8 @@ namespace Constellation
                 {
                     bool tooClose = false;
 
-                    Point a = new Point(r.Next(0, gameWorld.Width),
-                        r.Next(0, gameWorld.Height));
+                    Point a = new Point(r.Next(gameWorld.X, gameWorld.Width),
+                        r.Next(gameWorld.Y, gameWorld.Height));
                     /*
                      * 9.21.2014- fixed a bug where tooClose doesn't work b/c points are all added end fac_locList instead
                      * of end the factoryNodes list, so nothing end compare end.
@@ -198,8 +200,6 @@ namespace Constellation
             }
             //add player nodes
             AddPlayerStartNodes();
-
-            //backgroundSound.PlaySound(backgroundSound.BackgroundMusic);
         }
         public void AddPlayerStartNodes()
         {
@@ -225,30 +225,17 @@ namespace Constellation
         public List<ParticleEmitter> particleEmitters = new List<ParticleEmitter>();
         #endregion
 
-        /// <summary>
-		/// a property that gives a list of all units
-		/// </summary>
-		public List<Army> allUnits {
-			get { 
-				List<Army> temp = new List<Army>();
-				foreach (Player p in players) {
-					temp.AddRange(p.armies);
-				}
-				return temp;
-			} 
-		}
-		
         public void BuildUpArmies()
         {
-            //every 1/4th of a second:
-                foreach (FactoryNode f in factorynodes)
-                {
-                    //only increment for factories that are owned by player
-                    if (f.owner != null)
-                    {
-                        f.IncreaseArmy();
-                    }
-                }
+			//every 1/4th of a second:
+			foreach (FactoryNode f in factorynodes) {
+				//only increment for factories that are owned by player
+				if (f.owner == null)
+					continue;
+                    
+				f.IncreaseArmy();
+                    
+			}
         }
         public int totalTime = 0;
         public Player Go(int tmr_interval)
@@ -285,30 +272,36 @@ namespace Constellation
 			// armies get absorbed into factories
 			foreach (FactoryNode f in factorynodes) {
 				foreach (Road road in f.roadsConnected) {
-					if (road.armies != null)
-						foreach (Army a in road.armies) {
-							if (UTILS.DistSquared(f.loc, a.loc) < Math.Pow(f.radius + a.radius, 2)
-							   && f.loc == a.target) {
+					for (int i = 0; i < road.armies.Count; i++)
+					{
+						Army a = road.armies[i];
+						if (UTILS.DistSquared(f.loc, a.loc) < Math.Pow(f.radius + a.radius, 2)
+						     && f.loc == a.target) {
 							
-								particleEmitters.Add(new ParticleEmitter(
-									new Point((a.loc.X + f.loc.X) / 2, (a.loc.Y + f.loc.Y) / 2),
-									a.owner.color, f.owner.color, a.num + f.armyNumHere));
+							particleEmitters.Add(new ParticleEmitter(
+								new Point((a.loc.X + f.loc.X) / 2, (a.loc.Y + f.loc.Y) / 2),
+								a.owner.color, f.owner.color, a.num + f.armyNumHere));
                             
-								f.Join(a);
-							}
+							f.Join(a);
 						}
+					}
 				}
                 
 			}
             
-            //remove dead
-            foreach (Army a in allUnits) {
-				if (a.shouldRemove) {
-            		//players and roads notified of dead armies
-					a.owner.armies.Remove(a);
-					a.road.armies.Remove(a);
+			//remove dead
+			foreach (Player p in players) {
+				for (int i = 0; i < p.armies.Count; i++) 
+				{
+					Army a = p.armies[i];
+					if (a.shouldRemove) {
+						//players and roads notified of dead armies
+						a.owner.armies.Remove(a);
+						a.road.armies.Remove(a);
+						i--;
+					}
 				}
-            }
+			}
             
             return CheckForWinner();
         }
@@ -349,7 +342,7 @@ namespace Constellation
             			
 			
 
-            //------------------------------------HUMANS ONLY MOUSEMOVE!!(can't move for AI)
+            //--------------- HUMANS ONLY MOUSEMOVE!!(can't move for AI)
 
             if (fac_end.loc != fac_start.loc && fac_start.owner!=null &&!fac_start.owner.is_AI)
             {
@@ -357,33 +350,31 @@ namespace Constellation
                 int COST = 0;
                 bool alreadyHasRoad = false; 
                 if(fac_start.owner!=null) COST = fac_start.owner.roadCost;
-                foreach (Road road in roads) {
-                    //finds the road that connects the two things that is owned by player
-                    if (road.Connects(fac_start, fac_end))
-                    {
-                        if (mousemode == MouseMode.SendArmy)
-                        {
-                            // can send all armies on base via holding shift key
-                            if(sendAll)
-                                fac_start.SendAll(fac_end, road);
-                            else
-                                fac_start.SplitHalf(fac_end, road);
+                
+                //can't be foreach b/c will be modified
+				for (int i = 0; i < roads.Count; i++) {
+                	
+                	
+					//finds the road that connects the two things that is owned by player
+					if (roads[i].Connects(fac_start, fac_end)) {
+						if (mousemode == MouseMode.SendArmy) {
+							// can send all armies on base via holding shift key
+							if (sendAll)
+								fac_start.SendAll(fac_end, roads[i]);
+							else
+								fac_start.SplitHalf(fac_end, roads[i]);
                             
-                        }
-                        else if (mousemode == MouseMode.UpgradeRoads)
-                        {
+						} else if (mousemode == MouseMode.UpgradeRoads) {
                             
-							fac_start.owner.TryUpgradeRoad(fac_start, fac_end, road);
-                        }
-                        else if (mousemode== MouseMode.DestroyRoads)
-                        {
+							fac_start.owner.TryUpgradeRoad(fac_start, fac_end, roads[i]);
+						} else if (mousemode == MouseMode.DestroyRoads) {
 							//must own both nodes end destroy roads for fairness reasons
-							fac_start.owner.TryDestroyRoad(fac_start, fac_end, road, roads);
-                        }
+							fac_start.owner.TryDestroyRoad(fac_start, fac_end, roads[i], roads);
+						}
 
-                        alreadyHasRoad = true;
-                    }
-                }
+						alreadyHasRoad = true;
+					}
+				}
                 if (!alreadyHasRoad)
                 {
                      //it COSTS more and more army strengths end build one road
@@ -393,10 +384,6 @@ namespace Constellation
                 }
             }
         }
-
-        
-
-        
         #region statistics
         /*
         float PercentOfArmies(Player me)

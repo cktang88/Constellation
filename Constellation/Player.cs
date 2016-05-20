@@ -64,7 +64,8 @@ namespace Constellation
 				foreach (Army a in myArmy.road.armies) {
 					//proximity check for fighting
 					if (UTILS.DistSquared(myArmy.loc, a.loc) < Math.Pow(myArmy.radius + a.radius, 2)
-					    && myArmy.road == a.road) { //and on same road
+					    && myArmy.road == a.road //and on same road
+					   	&& myArmy.owner != a.owner) { //is enemy
 						particleEmitters.Add(new ParticleEmitter(
 							new Point((a.loc.X + a.loc.X) / 2,
 								(a.loc.Y + a.loc.Y) / 2),
@@ -86,11 +87,12 @@ namespace Constellation
 		
 		public bool TryBuildNewRoad(FactoryNode start, FactoryNode end, List<Road> roads)
 		{
-			if (start.roadsConnected != null)
-				foreach (Road r in start.roadsConnected) {
-					if (r.Connects(start, end))
-						return false; //already has road
-				}
+			if (start == null)
+				return false;
+			foreach (Road r in start.roadsConnected) {
+				if (r.Connects(start, end))
+					return false; //already has road
+			}
 
 			if (start.armyNumHere >= start.owner.roadCost//if enough money
 			    && start != end//if not the same factory node
@@ -107,7 +109,8 @@ namespace Constellation
 		{
 			//free
 			if (r.Connects(start, end)
-			    && start.owner ==this && end.owner==this) {
+			    && start.owner ==this && end.owner==this
+			    && r.armies.Count==0) { //and if noone is on the road
 
 				DestroyRoad(r, roads);
 				return true;
@@ -126,6 +129,7 @@ namespace Constellation
 			}
 			return false;
 		}
+		
         #region possible road commands
         public void UpgradeRoad(Road r)
         {
@@ -151,14 +155,16 @@ namespace Constellation
 			roads.Add(r);
                 
 			//if neutral fac
-			/*
+			
 			if (end.owner == null) {
+				/*
 				particleEmitters.Add(new ParticleEmitter(
 					end.loc, start.owner.color, start.owner.color, 10));
+					*/
 
 				end.NewOwner(start.owner);
 			}
-			*/
+			
 		}
         #endregion
 

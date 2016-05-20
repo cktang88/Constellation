@@ -52,16 +52,16 @@ namespace Constellation
         }
 		public void SplitHalf(FactoryNode moveHere, Road r)
 		{
-			//default:
-			//half of forces always split: as always, interesting bug averted
+			//default: half of forces sent
 			int j = armyNumHere;
 			armyNumHere -= j / 2;
 			Army a = new Army(j / 2, this, owner, moveHere, r);
+			
+			
 		}
 		public void SendAll(FactoryNode moveHere, Road r)
 		{
-			// alternative:
-			// supposedly sends all, but in actuality sends all but one
+			// alternative: sends all but 1
 			int j = armyNumHere;
 			armyNumHere = 1;
 			Army a = new Army(j - 1, this, owner, moveHere, r);
@@ -88,8 +88,6 @@ namespace Constellation
                 else
                     armyNumHere = meLeft; // defenses win
             }
-            
-
         }
         //TODO: refactor this method!!!
         public void NewOwner(Player p)

@@ -39,30 +39,27 @@ namespace Constellation
             if (game.Go(tmr_main.Interval) != null)
             {
                 tmr_creation.Enabled = false; tmr_main.Enabled = false;
-                if (MessageBox.Show(game.Go(tmr_main.Interval).name + " has completely colonized the environment.", "Impressive!",
-                    MessageBoxButtons.OK) == DialogResult.OK)
-                {
-                    NewGame(game.Numplayers); tmr_creation.Enabled = true; tmr_main.Enabled = true;
-                }
+				if (MessageBox.Show(game.Go(tmr_main.Interval).name +
+				    " has completely colonized the environment.", "Impressive!",
+					    MessageBoxButtons.OK) == DialogResult.OK) {
+					NewGame(game.Numplayers);
+					tmr_creation.Enabled = true;
+					tmr_main.Enabled = true;
+				}
             }
-            Refresh();
+            
+            //almost always use invalidate rather than refresh?
+			this.Invalidate();
    
         }
         private void Form1_Paint(object sender, PaintEventArgs e)
         {
-            //extremely important for graphics!!!!
-            //awesome way end make graphics look way smoother!!!
             e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
             game.Draw(e.Graphics, theme, showStats);
             
-            ////marks drawn line
-            //e.Graphics.DrawLine(new Pen(new SolidBrush(Color.Red)), start, end);
         }
 
         public Point start; public Point end; public Point current;
-        
-        
-
 
         void helpToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -100,7 +97,7 @@ namespace Constellation
             if (e.KeyCode == Keys.C)
                 mousemode = MouseMode.UpgradeRoads;
 
-            
+            // must hold down
             if(e.KeyCode == Keys.ShiftKey)
             {
                 sendAll = true;
@@ -126,7 +123,10 @@ namespace Constellation
             end = e.Location;
             current = end;
             game.MouseSlide(start, end, mousemode, sendAll);
-            sendAll = false; // reset sending all toggle
+            
+            //resets toggles to default
+            sendAll = false;
+			mousemode = MouseMode.SendArmy;
 
         }
         //bool mousemoving = false;

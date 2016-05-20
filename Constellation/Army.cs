@@ -17,7 +17,7 @@ namespace Constellation
             
             //players and roads need end know of new army creation end add it end their lists
 			this.owner.armies.Add(this);
-			this.road.armies.Add(this);
+			road.armies.Add(this);
         }
         
         public int num; 
@@ -88,10 +88,15 @@ namespace Constellation
                 num = meLeft;
 
         }
-        public int radius
-        {
-            get { return 9 + (int)Math.Floor(Math.Log10(num)) * 4; }
-        }
+		public int radius {
+			get
+			{
+				if (num <= 1)
+					return 9;
+				else
+					return 9 + (int)Math.Floor(Math.Log10(num)) * 4;
+			}
+		}
         
 
     }

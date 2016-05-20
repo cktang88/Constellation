@@ -9,7 +9,7 @@ namespace Constellation
     {
         public List<FactoryNode> endpoints; 
         public RoadTypes rdtype;
-		public List<Army> armies;
+		public List<Army> armies = new List<Army>();
 		public bool Contains(Army a)
 		{
 			return armies.Contains(a);
