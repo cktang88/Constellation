@@ -1,0 +1,8 @@
+C:\Users\tiger_000\Documents\C K 20091129\C#\---PROJECTS---\Constellation\obj\Debug\Constellation.csprojResolveAssemblyReference.cache
+C:\Users\tiger_000\Documents\C K 20091129\C#\---PROJECTS---\Constellation\bin\Debug\Constellation.exe.config
+C:\Users\tiger_000\Documents\C K 20091129\C#\---PROJECTS---\Constellation\bin\Debug\Constellation.exe
+C:\Users\tiger_000\Documents\C K 20091129\C#\---PROJECTS---\Constellation\bin\Debug\Constellation.pdb
+C:\Users\tiger_000\Documents\C K 20091129\C#\---PROJECTS---\Constellation\obj\Debug\Constellation.exe
+C:\Users\tiger_000\Documents\C K 20091129\C#\---PROJECTS---\Constellation\obj\Debug\Constellation.pdb
+C:\Users\tiger_000\Documents\C K 20091129\C#\---PROJECTS---\Constellation\obj\Debug\Constellation.Form1.resources
+C:\Users\tiger_000\Documents\C K 20091129\C#\---PROJECTS---\Constellation\obj\Debug\Constellation.csproj.GenerateResource.Cache

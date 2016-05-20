@@ -1,0 +1,22 @@
+*Solar Inroads
+The goal is to capture all the stars in the galaxy. To do this, armies must be sent along roads linking the stars. Roads cannot be owned; they can only be built and destroyed.
+
+*1. Building roads
+	The cost of building a road is equal to the number of stars you control. This cost is deducted from the army size at the star at which the road starts.
+
+*2. Sending armies
+	Sending an army along the road can be done by a "drag and drop" motion starting from the star of origin and ending at the target star. By default, this splits half of fleet from the star to go along the road to the target.
+
+*3. Combat
+        In combat, larger fleets will disproportionately inflict casualties on smaller fleets, so it is best to outnumber the enemy to minimize casualties.
+
+*4. Upgrading roads
+	Upgrade roads by holding the "Z" key while doing the "drag and drop" motion used previously to send an army will now be used to upgrade roads. In order to go back to "send army" mode, press "Z" or select the send army option from the dropdown menu.
+	Upgrades allow armies to travel on them faster, though they can also be used by the enemy. A road can have up to three upgrades, allowing faster travel each time. This costs the same as building a new road.
+
+*5. Destroying roads
+        Destroy roads by holding the "X" key while dragging and dropping. Destroying a road requires ownership of both endpoint stars but no cost, regardless of any upgrades the road has. If somehow a road is removed while an fleet is travelling on it, the fleet will still arrive at its destination.
+
+*6. Miscellaneous
+	Ideally, an efficient network of roads and quick expansion is necessary to win the game. There are also a variety of maps, and colors, background colors, and game speed, as well as game mode is available in the "New Game" menu item.
+
