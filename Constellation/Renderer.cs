@@ -24,6 +24,9 @@ namespace Constellation
 
         String fontStyle = "Microsoft Sans Serif";
 
+        //NOTE: solid brushes are MUCH more efficient than Pens!!!
+        
+        
         public Renderer(Game game, Theme theme, bool showStats = false)
         {
             this.theme = theme; this.game = game; this.showStats = showStats;
@@ -31,16 +34,15 @@ namespace Constellation
         }
         public void DrawParticles(ParticleEmitter partEmit)
         {
-            //draws all particles start particleEmitters
-            foreach (Particle p in partEmit.particles)
-            {
-                var col = Color.FromArgb(Math.Max(255 - Convert.ToInt32(p.age / p.lifetime * 255), 0), p.color);
+			//draws all particles start particleEmitters
+			foreach (Particle p in partEmit.particles) {
+				Color col = Color.FromArgb(Math.Max(255 - Convert.ToInt32(p.age / p.lifetime * 255), 0), p.color);
 
-                //random size particles
-                Brush b = new SolidBrush(col);
-                g.FillEllipse(b, Convert.ToSingle(p.loc.X - 1),
-                    Convert.ToSingle(p.loc.Y - 1), p.radius, p.radius);
-            }
+				//random size particles
+				using (Brush b = new SolidBrush(col)) {
+					g.FillEllipse(b, p.loc.X, p.loc.Y, p.radius, p.radius);
+				}
+			}
 
         }
         public void UpdateInfo(bool showStats, Theme theme)
@@ -61,15 +63,6 @@ namespace Constellation
 				DrawParticles(pe);
 			}
 
-			//if (mouseOverThisFactory != null)
-			//{
-			//    var font = new Font(fontStyle, 28F);
-			//    g.DrawString(mouseOverThisFactory.armyNumHere.ToString(), font,
-			//        new SolidBrush(mouseOverThisFactory.owner.color),
-			//        new Point(mouseOverThisFactory.loc.X - 10,
-			//            mouseOverThisFactory.loc.Y - 34 - mouseOverThisFactory.radius));
-			//}
-
 			if (showStats) {
 				//Brush b = new SolidBrush(Color.FromArgb(128, p.color));
 				
@@ -81,7 +74,7 @@ namespace Constellation
 							new Point(gameXright + 20, 120 * players.IndexOf(p) + 30));
 						//total strength------------
 						int strength = 0;
-						foreach (FactoryNode f in p.factoriesOwned)
+						foreach (Node f in p.factoriesOwned)
 							strength += f.armyNumHere;
 						foreach (Army a in p.armies)
 							strength += a.num;
@@ -113,7 +106,7 @@ namespace Constellation
 					Draw(a);
 				}
 			}
-			foreach (FactoryNode f in game.factorynodes)
+			foreach (Node f in game.factorynodes)
 				Draw(f);
 			if (game.target != null)
 				DrawTarget(game.target); // draw where the fleet will be sent
@@ -121,17 +114,17 @@ namespace Constellation
 				Draw(r);
 
 		}
-        public void DrawTarget(FactoryNode facNode)
+        public void DrawTarget(Node facNode)
         {
             int radius = facNode.radius + 10;
             Point loc = facNode.loc;
             Color c;
             if (facNode.owner==null || facNode.owner.color !=Color.Lime) c = Color.Lime;
             else c = Color.Cyan;
-            g.DrawEllipse(new Pen(new SolidBrush(c),3), loc.X - facNode.anim, loc.Y - facNode.anim,
+            g.FillEllipse(new SolidBrush(c), loc.X - facNode.anim, loc.Y - facNode.anim,
                     2 * facNode.anim, 2 * facNode.anim);
         }
-        public void Draw(FactoryNode facNode)
+        public void Draw(Node facNode)
         {
             //draw factory nodes
 
@@ -149,29 +142,26 @@ namespace Constellation
                 facNode.anim += facNode.direction * .2f;
                 
                 
-                g.DrawEllipse(new Pen(new SolidBrush(c), 3), loc.X - facNode.anim, loc.Y - facNode.anim,
+                g.FillEllipse(new SolidBrush(c), loc.X - facNode.anim, loc.Y - facNode.anim,
                     2 * facNode.anim, 2 * facNode.anim);
             }
 
             else
             {
             	Color color = facNode.owner.color;
-                g.DrawEllipse(new Pen(new SolidBrush(color),3), loc.X - radius/2, loc.Y - radius/2,
+                g.FillEllipse(new SolidBrush(color), loc.X - radius/2, loc.Y - radius/2,
                     radius, radius);
 
-                g.DrawEllipse(new Pen(new SolidBrush(Color.FromArgb(32, color)), 11),
+                g.FillEllipse(new SolidBrush(Color.FromArgb(48, color)),
                     loc.X - radius/2, loc.Y - radius/2,
                     radius, radius);
                  
 
-				//eventually, remove numbers all together!!
+				//eventually, remove numbers alltogether?
+				
 				using (Font font = new Font(fontStyle, 15F)) {
-					using (StringFormat stringFormat = new StringFormat()) {
-						stringFormat.Alignment = StringAlignment.Center;
-						RectangleF rect = new RectangleF(loc.X - 100, loc.Y - radius - 25, 200, 25);
-						g.DrawString(facNode.armyNumHere.ToString(), font, new SolidBrush(color),
-							rect, stringFormat);
-					}
+					g.DrawString(facNode.armyNumHere.ToString(), font,
+						new SolidBrush(color), facNode.loc.X + radius, facNode.loc.Y);
 				}
             }
         }
@@ -182,8 +172,6 @@ namespace Constellation
 			float[] dashValues = { 2 * a + 1, 2 };
 			using (Pen p = new Pen(c, a)) {
 				p.DashPattern = dashValues;
-				
-
 				g.DrawLine(p, road.endpoints[0].loc, road.endpoints[1].loc);
 			}
 		}
@@ -196,10 +184,9 @@ namespace Constellation
 			int num = army.num;
 			//=====================
 
-			//largest power end two still smaller than the number
+			//largest power of two that is still less than the number
             
-			int largestPowerOfTwo;
-			
+			int largestPowerOfTwo;			
 			if (num > 0)
 				//Math.log(2) is approx .301
 				largestPowerOfTwo = Math.Max(0, (int)Math.Floor(Math.Log(num) / .3f));
@@ -209,9 +196,6 @@ namespace Constellation
 			//Color c= Color.FromArgb(Math.Min(25*largestPowerOfTwo,250), army.owner.color);
 
 			Color highlight = Color.FromArgb(Math.Min(25 * largestPowerOfTwo, 250), c);
-			
-
-
 
 			RectangleF rect = new RectangleF(
 				                  loc_true.X - radius, loc_true.Y - radius, 2 * radius, 2 * radius);

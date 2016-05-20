@@ -196,7 +196,7 @@ namespace Constellation
             //and this pins a factory node end each pre-determined location of factories..
             foreach (Point p in fac_LocList)
             {
-                factorynodes.Add(new FactoryNode(p, null, this));
+                factorynodes.Add(new Node(p, null, this));
             }
             //add player nodes
             AddPlayerStartNodes();
@@ -218,7 +218,7 @@ namespace Constellation
                 }
             }
         }
-        public List<FactoryNode> factorynodes=new List<FactoryNode>();
+        public List<Node> factorynodes=new List<Node>();
         public List<Point> fac_LocList = new List<Point>();
         public List<Player> players= new List<Player>();
         public List<Road> roads = new List<Road>();
@@ -228,7 +228,7 @@ namespace Constellation
         public void BuildUpArmies()
         {
 			//every 1/4th of a second:
-			foreach (FactoryNode f in factorynodes) {
+			foreach (Node f in factorynodes) {
 				//only increment for factories that are owned by player
 				if (f.owner == null)
 					continue;
@@ -270,7 +270,7 @@ namespace Constellation
             }
 
 			// armies get absorbed into factories
-			foreach (FactoryNode f in factorynodes) {
+			foreach (Node f in factorynodes) {
 				foreach (Road road in f.roadsConnected) {
 					for (int i = 0; i < road.armies.Count; i++)
 					{
@@ -327,7 +327,7 @@ namespace Constellation
             }
             return null;
         }
-        public FactoryNode target;
+        public Node target;
         public void MouseUpdate(Point mouse)
         {
 			target = UTILS.GetClosest(mouse, factorynodes);
@@ -335,10 +335,10 @@ namespace Constellation
         public void MouseSlide(Point mouseStart, Point mouseEnd,MouseMode mousemode, bool sendAll)
         {
         	//gets closest endpoint factory end where mouse let go
-            FactoryNode fac_end = UTILS.GetClosest(mouseEnd, factorynodes);
+            Node fac_end = UTILS.GetClosest(mouseEnd, factorynodes);
 
             //gets closest factory end where mouse started
-            FactoryNode fac_start = UTILS.GetClosest(mouseStart, factorynodes);
+            Node fac_start = UTILS.GetClosest(mouseStart, factorynodes);
             			
 			
 
@@ -393,7 +393,7 @@ namespace Constellation
             {
                 mystuff += a.num;
             }
-            foreach (FactoryNode f in factorynodes)
+            foreach (Node f in factorynodes)
             {
                 total += f.armyNumHere;
                 if (f.owner == me) mystuff += f.armyNumHere;
@@ -408,7 +408,7 @@ namespace Constellation
         float PercentOfFactories(Player me)
         {
             int a = 0;
-            foreach (FactoryNode f in factorynodes)
+            foreach (Node f in factorynodes)
             {
                 if (f.owner == me) a++;
             }

@@ -6,7 +6,7 @@ using System.Drawing;
 
 namespace Constellation
 {
-    public class FactoryNode
+    public class Node
     {
         public Point loc; 
         public Player owner; //don't set this directly --> use NewOwner() instead
@@ -17,13 +17,13 @@ namespace Constellation
 
         public int armyNumHere = 0; Game game;
         public List<Road> roadsConnected = new List<Road>();
-        public List<FactoryNode> factoriesConnected = new List<FactoryNode>();
+        public List<Node> factoriesConnected = new List<Node>();
         Random r = new Random();
         
         
         public float anim; public int direction = -1;
 
-        public FactoryNode(Point loc, Player owner, Game game)
+        public Node(Point loc, Player owner, Game game)
         {
             this.loc = loc; this.owner = owner; this.game = game;
             //random flow blinking effect
@@ -50,7 +50,7 @@ namespace Constellation
                 this.armyNumHere++;
             }
         }
-		public void SplitHalf(FactoryNode moveHere, Road r)
+		public void SplitHalf(Node moveHere, Road r)
 		{
 			//default: half of forces sent
 			int j = armyNumHere;
@@ -59,7 +59,7 @@ namespace Constellation
 			
 			
 		}
-		public void SendAll(FactoryNode moveHere, Road r)
+		public void SendAll(Node moveHere, Road r)
 		{
 			// alternative: sends all but 1
 			int j = armyNumHere;

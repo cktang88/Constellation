@@ -18,7 +18,7 @@ namespace Constellation
 		public bool is_AI = false;
         
 		public List<Army> armies = new List<Army>();
-		public List<FactoryNode> factoriesOwned = new List<FactoryNode>();
+		public List<Node> factoriesOwned = new List<Node>();
 		
 		protected Rectangle gameWorld;
         
@@ -85,7 +85,7 @@ namespace Constellation
 		}
 		
 		
-		public bool TryBuildNewRoad(FactoryNode start, FactoryNode end, List<Road> roads)
+		public bool TryBuildNewRoad(Node start, Node end, List<Road> roads)
 		{
 			if (start == null)
 				return false;
@@ -105,7 +105,7 @@ namespace Constellation
 			return false;
             
 		}
-		public bool TryDestroyRoad(FactoryNode start, FactoryNode end, Road r, List<Road> roads)
+		public bool TryDestroyRoad(Node start, Node end, Road r, List<Road> roads)
 		{
 			//free
 			if (r.Connects(start, end)
@@ -117,7 +117,7 @@ namespace Constellation
 			}
 			return false;
 		}
-		public bool TryUpgradeRoad(FactoryNode start, FactoryNode end, Road r)
+		public bool TryUpgradeRoad(Node start, Node end, Road r)
 		{
 			if (r.Connects(start, end)
 			    && start.owner !=null
@@ -137,7 +137,7 @@ namespace Constellation
         }
         public void DestroyRoad(Road r, List<Road> roads)
         {
-            foreach (FactoryNode f in r.endpoints)
+            foreach (Node f in r.endpoints)
 	        {		 
             	//update factory's info of connections
                 f.roadsConnected.Remove(r);
@@ -145,10 +145,10 @@ namespace Constellation
             }
             roads.Remove(r);
         }
-		public void NewRoad(FactoryNode start, FactoryNode end, List<Road> roads)
+		public void NewRoad(Node start, Node end, List<Road> roads)
 		{
 			Road r = new Road(start, end, RoadTypes.Dirt);
-			foreach (FactoryNode f in r.endpoints) {
+			foreach (Node f in r.endpoints) {
 				f.roadsConnected.Add(r);
 				f.factoriesConnected.Add(r.endpoints[1 - r.endpoints.IndexOf(f)]);
 			}

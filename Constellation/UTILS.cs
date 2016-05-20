@@ -21,7 +21,7 @@ namespace Constellation
 		/// </summary>
 		/// <param name="units"></param>
 		/// <returns></returns>
-		public static FactoryNode GetClosest(PointF pt, List<FactoryNode> units)
+		public static Node GetClosest(PointF pt, List<Node> units)
 		{
 			if(units.Count==0) return null;
 
@@ -33,14 +33,14 @@ namespace Constellation
 		/// <param name="pt"></param>
 		/// <param name="units"></param>
 		/// <returns></returns>
-		public static List<FactoryNode> GetClosestList(PointF pt, List<FactoryNode> units)
+		public static List<Node> GetClosestList(PointF pt, List<Node> units)
 		{
 			if (units.Count == 0)
 				return null;
 			var result = from u in units
 			             orderby DistSquared(pt, u.loc)
 			             select u;
-			return result.ToList<FactoryNode>();
+			return result.ToList<Node>();
 		}
 		
 		/// <summary>

@@ -31,12 +31,12 @@ namespace Constellation
 		}
 		List<Player> players;
 		List<int> strategySpots = new List<int>();
-		List<FactoryNode> allFacs; //all factories in the game
+		List<Node> allFacs; //all factories in the game
 		bool strategy_setup = false;
 		List<Road> roads;
 		//my armies only
 
-		public void Do(List<Player> players, List<FactoryNode> allFacs, List<Road> roads)
+		public void Do(List<Player> players, List<Node> allFacs, List<Road> roads)
 		{
 			
 			//update game info
@@ -49,7 +49,7 @@ namespace Constellation
 			if (TimeUntilNextMove <= 0) {
 				TimeUntilNextMove = 20;
 				
-				foreach (FactoryNode fac in allFacs) {
+				foreach (Node fac in allFacs) {
 					
 					if (!strategy_setup) {
 						if (TopMostFac.owner == null && strategySpots.Contains(1))
@@ -74,10 +74,10 @@ namespace Constellation
 					
 
 					//my closest factory to "fac" that has no roads between them
-					FactoryNode x = ClosestFactoryTo(fac, RoadExistence.no, FactoryOwner.me);
+					Node x = ClosestFactoryTo(fac, RoadExistence.no, FactoryOwner.me);
 					
 					//the closest enemy factory to "fac", roads or not
-					FactoryNode y = ClosestFactoryTo(fac, RoadExistence.any, FactoryOwner.enemy);
+					Node y = ClosestFactoryTo(fac, RoadExistence.any, FactoryOwner.enemy);
 
 
 					//expand && capture neutral allFacs
@@ -98,8 +98,8 @@ namespace Constellation
 					
 					//prioritize attack on enemy centers closest to it
 					if (fac.owner == this) {
-						List<FactoryNode> f_temporary = UTILS.GetClosestList(fac.loc, allFacs);
-						foreach (FactoryNode f in f_temporary) {
+						List<Node> f_temporary = UTILS.GetClosestList(fac.loc, allFacs);
+						foreach (Node f in f_temporary) {
 							if (f.owner == this || f.owner == null) //makes sure target is an enemy factory
 								continue; 
 							
@@ -114,6 +114,8 @@ namespace Constellation
 								
 							}
 						}
+						//TODO: make AI's "big clumps" quickly build & upgrade quick roads to attack enemies
+						
 						
 						//TODO: make use of ArmiesToHelp() method!!!! for reinforcing
 						
@@ -139,46 +141,37 @@ namespace Constellation
 		
 		//---------------------------------------------these are not the absolute closest factory
 		//to the certain location strategic point, they have been purposely "fuzzied up"
-		public FactoryNode CenterMostFac
+		public Node CenterMostFac
 		{
 			get
 			{
-				FactoryNode fac = null;
-				float n = 1000;
-				foreach (FactoryNode f in allFacs)
-				{
-					if (UTILS.Distance(f.loc, new Point(gameWorld.Width / 2, gameWorld.Height / 2)) -100<= n)
-					{
-						n = UTILS.Distance(f.loc, new Point(gameWorld.Width / 2, gameWorld.Height / 2));
-						fac = f;
-					}
-				}
-				return fac;
+				Point p = new Point(gameWorld.Width / 2, gameWorld.Height / 2);
+				return UTILS.GetClosest(p, allFacs);
 			}
 		}
-		public FactoryNode LeftMostFac {
+		public Node LeftMostFac {
 			get
 			{
 				Point p = new Point(0, gameWorld.Height / 2);
 				return UTILS.GetClosest(p, allFacs);
 			}
 		}
-		public FactoryNode RightMostFac {
+		public Node RightMostFac {
 			get
 			{
 				Point p = new Point(gameWorld.Width, gameWorld.Height / 2);
 				return UTILS.GetClosest(p, allFacs);
 			}
 		}
-		public FactoryNode TopMostFac {
+		public Node TopMostFac {
 			get
 			{
 				Point p = new Point(gameWorld.Width / 2, 0);
-				FactoryNode f = UTILS.GetClosest(p, allFacs);
+				Node f = UTILS.GetClosest(p, allFacs);
 				return f;
 			}
 		}
-		public FactoryNode BottomMostFac {
+		public Node BottomMostFac {
 			get
 			{
 				Point p = new Point(gameWorld.Width / 2, gameWorld.Height);
@@ -195,12 +188,12 @@ namespace Constellation
 		/// <param name="start"></param>
 		/// <param name="end"></param>
 		/// <param name="num"></param>
-		public void SendArmy(FactoryNode start, FactoryNode end, int num)
+		public void SendArmy(Node start, Node end, int num)
 		{	
 			Road r = RoadBetween(start, end);
 			
 			if (r == null 
-			    || start.armyNumHere < 50 //don't send small armies
+			    || start.armyNumHere < 80 //don't send small armies
 			    || start == end)
 				return;
 			
@@ -218,7 +211,7 @@ namespace Constellation
 		/// <param name="source"></param>
 		/// <param name="sink"></param>
 		/// <returns>number of armies to send (1/2, 1/4, 1/8, etc)</returns>
-		public int ArmiesToHelp(FactoryNode source, FactoryNode sink)
+		public int ArmiesToHelp(Node source, Node sink)
 		{
 			int NEED = NetIncoming(sink) - sink.armyNumHere;
 
@@ -234,7 +227,7 @@ namespace Constellation
 			{
 
 				bool danger = false;
-				foreach (FactoryNode f in source.factoriesConnected)
+				foreach (Node f in source.factoriesConnected)
 				{
 					//check if i'm in danger --> self-preservation first
 					if (f.owner != this && UTILS.DistSquared(f.loc, source.loc) <
@@ -261,13 +254,13 @@ namespace Constellation
 
 					float sourceEnemies = 0;
 					float sinkEnemies = 0;
-					foreach (FactoryNode f in source.factoriesConnected)
+					foreach (Node f in source.factoriesConnected)
 					{
 						//calculate power of possible attack
 						float a = NewUnits(f, source);
 						if (f.owner != this) sourceEnemies += f.armyNumHere - a;
 					}
-					foreach (FactoryNode f in sink.factoriesConnected)
+					foreach (Node f in sink.factoriesConnected)
 					{
 						//calculate power of possible attack
 						float a = NewUnits(f, source);
@@ -290,40 +283,56 @@ namespace Constellation
 		/// mobilizes forces to the "front lines"
 		/// </summary>
 		/// <param name="me"></param>
-		public void Harvest(FactoryNode me)
+		public void Harvest(Node me)
 		{
 			
-			//closest connected friendly factory
-			FactoryNode friend = ClosestFactoryTo(me, RoadExistence.yes, FactoryOwner.me);
+			Node friend = null;
+			Node enemyofFriend = null; //the enemy closest/connected to friend
+			
+			//selects a connected friendly factory that meet certain criteria:
+			float distSquared = 800 * 800;
+			foreach (Node fac in me.factoriesConnected) {
+				Node temp = ClosestFactoryTo(fac, RoadExistence.yes, FactoryOwner.enemy);
+				if (temp != null) {
+					//if friend is directly connected to enemy, immediately send help
+					friend = fac;
+					enemyofFriend = temp;
+					break;
+				} else {
+					//if no friends directly connected to enemy, get the one that is closest to enemy
+					temp = ClosestFactoryTo(fac, RoadExistence.no, FactoryOwner.enemy);
+					if (temp == null)
+						continue;
+					float d = UTILS.DistSquared(fac.loc, temp.loc);
+					
+					if (distSquared > d) {
+						distSquared = d;
+						friend = fac;
+						enemyofFriend = temp;
+					}
+				}
+			}
 			if (friend == null)
 				return;
 			
-			FactoryNode enemy;
-			enemy = ClosestFactoryTo(me, RoadExistence.yes, FactoryOwner.enemy);
+			Node enemyOfMe;
+			enemyOfMe = ClosestFactoryTo(me, RoadExistence.yes, FactoryOwner.enemy);
 			
-			if (enemy == null) //only harvest if i'm NOT connected to enemy
-				enemy = ClosestFactoryTo(me, RoadExistence.no, FactoryOwner.enemy);
-			if (enemy == null)
+			if (enemyOfMe == null) //only harvest if i'm NOT connected to enemy
+				enemyOfMe = ClosestFactoryTo(me, RoadExistence.no, FactoryOwner.enemy);
+			else
+				return; //if i'm connected to enemy, can't harvest
+			
+			if (enemyOfMe == null) //if its STILL null (no enemies)
 				return;
 				
-			//if friend connected to enemy && i'm not in great danger
-			if (ClosestFactoryTo(friend, RoadExistence.yes, FactoryOwner.enemy) != null) {
-				if (UTILS.DistSquared(enemy.loc, me.loc) > UTILS.DistSquared(friend.loc, me.loc))
-					SendArmy(me, friend, 4); //sendAll
+			float dist = UTILS.DistSquared(enemyOfMe.loc, me.loc);
+			
+			if (1.2 * dist > UTILS.DistSquared(enemyofFriend.loc, friend.loc)) {
+				SendArmy(me, friend, 4); //sendAll
 			}
-				// also if friend not connected
-				else {
-				//closest unconnected enemy to friend
-				FactoryNode a = ClosestFactoryTo(friend, RoadExistence.no, FactoryOwner.enemy);
-					
-				//if i am farther from the front lines (with a little tolerance), harvest
-				if (UTILS.DistSquared(enemy.loc, me.loc) + 40 * 40 > UTILS.DistSquared(friend.loc, a.loc)) {
-					SendArmy(me, friend, 4); //sendAll
-				}
-			}
-				
 		}
-		public int NetIncoming(FactoryNode f)
+		public int NetIncoming(Node f)
 		{
 			//returns net incoming armies, friendlies & enemies balance out
 			int attacker_pop = 0;
@@ -344,13 +353,13 @@ namespace Constellation
 		public Road ShouldUpgrade()
 		{
 			//list of all nodes with >= 3 connections
-			foreach (FactoryNode f in this.factoriesOwned)
+			foreach (Node f in this.factoriesOwned)
 			{
 				if (f.roadsConnected.Count >= 3
 				    && f.owner == this
 				    && NetIncoming(f) <= f.armyNumHere - roadCost)
 				{
-					foreach (FactoryNode f2 in f.factoriesConnected)
+					foreach (Node f2 in f.factoriesConnected)
 					{
 						//upgrade proportionally end roads leading to each end factory
 						//only upgrade if not under attack
@@ -371,7 +380,7 @@ namespace Constellation
 		/// <param name="attacker"></param>
 		/// <param name="toAttack"></param>
 		/// <returns></returns>
-		public int ArmiesToSend(FactoryNode attacker, FactoryNode toAttack)
+		public int ArmiesToSend(Node attacker, Node toAttack)
 		{
 
 			if (attacker.owner == this
@@ -381,7 +390,7 @@ namespace Constellation
 			{
 				int reinforcement_possible= 0;
 
-				foreach (FactoryNode f in toAttack.factoriesConnected)
+				foreach (Node f in toAttack.factoriesConnected)
 				{
 					//if reinforcement can come on time
 					if(f.owner!=this && NumTravelTicks(f, toAttack)<=NumTravelTicks(attacker, toAttack))
@@ -412,7 +421,7 @@ namespace Constellation
 			return 0;
 		}
 		
-		public float NumTravelTicks(FactoryNode start, FactoryNode end)
+		public float NumTravelTicks(Node start, Node end)
 		{
 			//so if used in reinforcement senses, no reinforcements will come
 			if (RoadBetween(start, end) != null)
@@ -430,7 +439,7 @@ namespace Constellation
 		/// <param name="start"></param>
 		/// <param name="end"></param>
 		/// <returns></returns>
-		public float NewUnits(FactoryNode start, FactoryNode end)
+		public float NewUnits(Node start, Node end)
 		{
 			return NumTravelTicks(start, end) * mainTickInterval / buildTickInterval;
 		}
@@ -441,7 +450,7 @@ namespace Constellation
 		/// <param name="start"></param>
 		/// <param name="end"></param>
 		/// <returns></returns>
-		public Road RoadBetween(FactoryNode start, FactoryNode end)
+		public Road RoadBetween(Node start, Node end)
 		{
 			foreach (Road r in start.roadsConnected) {
 				if (r.endpoints.Contains(end))
@@ -450,24 +459,29 @@ namespace Constellation
 			return null;
 		}
 		
-		public FactoryNode ClosestFactoryTo(FactoryNode fromThis, RoadExistence mustHaveRoad, FactoryOwner f_owner)
+		public Node ClosestFactoryTo(Node fromThis, RoadExistence mustHaveRoad, FactoryOwner f_owner)
 		{
-			
-			List<FactoryNode> f_temporary = UTILS.GetClosestList(fromThis.loc, allFacs);
-			foreach (FactoryNode f in f_temporary)
+			//slight optimization
+			List<Node> f_temp;
+			if(mustHaveRoad == RoadExistence.yes)
 			{
+				f_temp = UTILS.GetClosestList(fromThis.loc, fromThis.factoriesConnected);
+			}		
+			else
+				f_temp = UTILS.GetClosestList(fromThis.loc, allFacs);
+			
+			foreach (Node f in f_temp) {
 				if (f == fromThis) //closest fac can't be itself!
 					continue;
-				if (mustHaveRoad==RoadExistence.yes && RoadBetween(fromThis, f) != null
-				    || mustHaveRoad==RoadExistence.no && RoadBetween(fromThis,f)==null
-				    || mustHaveRoad==RoadExistence.any)
-				{
-					if (f_owner == FactoryOwner.me && f.owner == this ||
-					    f_owner == FactoryOwner.enemy && f.owner != this && f.owner != null ||
-					    f_owner == FactoryOwner.noone && f.owner == null ||
-					    f_owner == FactoryOwner.anyone ||
-					    f_owner == FactoryOwner.notMe && f.owner != this) {
-						
+				if (f_owner == FactoryOwner.me && f.owner == this ||
+				    f_owner == FactoryOwner.enemy && f.owner != this && f.owner != null ||
+				    f_owner == FactoryOwner.noone && f.owner == null ||
+				    f_owner == FactoryOwner.anyone ||
+				    f_owner == FactoryOwner.notMe && f.owner != this) {
+					
+					if (mustHaveRoad == RoadExistence.no && RoadBetween(fromThis, f) == null
+					   || mustHaveRoad == RoadExistence.any) {
+										
 						return f;
 					}
 				}
@@ -481,12 +495,12 @@ namespace Constellation
 		/// <param name="f_owner"></param>
 		/// <param name="mustHaveRoad"></param>
 		/// <returns></returns>
-		public FactoryNode ClosestFactoryOf(FactoryOwner f_owner, RoadExistence mustHaveRoad)
+		public Node ClosestFactoryOf(FactoryOwner f_owner, RoadExistence mustHaveRoad)
 		{
-			float d = 2000*2000; FactoryNode closestFac=null;
+			float d = 2000*2000; Node closestFac=null;
 
-			foreach (FactoryNode myFac in this.factoriesOwned) {
-				foreach (FactoryNode f in allFacs) {
+			foreach (Node myFac in this.factoriesOwned) {
+				foreach (Node f in allFacs) {
 					if (mustHaveRoad == RoadExistence.yes && RoadBetween(myFac, f) != null
 					    || mustHaveRoad == RoadExistence.no && RoadBetween(myFac, f) == null
 					    || mustHaveRoad == RoadExistence.any) {

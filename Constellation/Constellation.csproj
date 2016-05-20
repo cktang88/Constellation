@@ -53,7 +53,7 @@
   <ItemGroup>
     <Compile Include="AI.cs" />
     <Compile Include="Army.cs" />
-    <Compile Include="FactoryNode.cs" />
+    <Compile Include="Node.cs" />
     <Compile Include="Form1.cs" />
     <Compile Include="Form1.Designer.cs" />
     <Compile Include="Game.cs" />
@@ -72,9 +72,6 @@
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="ProfilingSessions\Session20160520_120222.sdps" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

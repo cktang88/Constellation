@@ -6,7 +6,7 @@ namespace Constellation
 {
     public class Army
     {
-        public Army(int num, FactoryNode start, Player owner, FactoryNode end, Road road)
+        public Army(int num, Node start, Player owner, Node end, Road road)
         {
             this.num = num; 
             this.owner = owner; 

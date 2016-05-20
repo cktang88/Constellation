@@ -7,7 +7,7 @@ namespace Constellation
     public enum RoadTypes { Dirt, Gravel, Highway, Rail}
     public class Road
     {
-        public List<FactoryNode> endpoints; 
+        public List<Node> endpoints; 
         public RoadTypes rdtype;
 		public List<Army> armies = new List<Army>();
 		public bool Contains(Army a)
@@ -15,16 +15,16 @@ namespace Constellation
 			return armies.Contains(a);
 		}
         
-        public Road(FactoryNode a, FactoryNode b, RoadTypes rdtype)
+        public Road(Node a, Node b, RoadTypes rdtype)
         {
-            endpoints = new List<FactoryNode>(2);
+            endpoints = new List<Node>(2);
             endpoints.Add(a);
             endpoints.Add(b);
             this.rdtype = rdtype;
             travelSpeed = (int)rdtype * .4f + .4f;
         }
         public float travelSpeed;
-        public bool Connects(FactoryNode start, FactoryNode end)
+        public bool Connects(Node start, Node end)
         {
 			return endpoints.Contains(start) && endpoints.Contains(end) 
 				&& start.loc != end.loc; //and not the same fac

@@ -111,7 +111,7 @@ namespace Constellation
 
             this.tmr_creation.Interval = buildTmr_orig / a;
             this.tmr_main.Interval = mainTmr_orig / a;
-            this.Text = "Solar Inroads [" + a + "]";
+            this.Text = "Constellation    [ Gamespeed: " + a + "X ]";
 
         }
         private void Form1_MouseDown(object sender, MouseEventArgs e)
