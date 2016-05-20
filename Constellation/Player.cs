@@ -94,11 +94,11 @@ namespace Constellation
 					return false; //already has road
 			}
 
-			if (start.armyNumHere >= start.owner.roadCost//if enough money
+			if (start.armyStrength >= start.owner.roadCost//if enough money
 			    && start != end//if not the same factory node
 			    && start.owner == this) { //i own the start factory node
 				
-				start.armyNumHere -= start.owner.roadCost;
+				start.armyStrength -= start.owner.roadCost;
 				NewRoad(start, end, roads);
 				return true;
 			}
@@ -121,9 +121,9 @@ namespace Constellation
 		{
 			if (r.Connects(start, end)
 			    && start.owner !=null
-			    && start.armyNumHere >= start.owner.roadCost) {
+			    && start.armyStrength >= start.owner.roadCost) {
 				
-				start.armyNumHere -= start.owner.roadCost;
+				start.armyStrength -= start.owner.roadCost;
 				UpgradeRoad(r);
 				return true;
 			}
@@ -141,7 +141,7 @@ namespace Constellation
 	        {		 
             	//update factory's info of connections
                 f.roadsConnected.Remove(r);
-                f.factoriesConnected.Remove(r.endpoints[1-r.endpoints.IndexOf(f)]);
+                f.nodesConnected.Remove(r.endpoints[1-r.endpoints.IndexOf(f)]);
             }
             roads.Remove(r);
         }
@@ -150,7 +150,7 @@ namespace Constellation
 			Road r = new Road(start, end, RoadTypes.Dirt);
 			foreach (Node f in r.endpoints) {
 				f.roadsConnected.Add(r);
-				f.factoriesConnected.Add(r.endpoints[1 - r.endpoints.IndexOf(f)]);
+				f.nodesConnected.Add(r.endpoints[1 - r.endpoints.IndexOf(f)]);
 			}
 			roads.Add(r);
                 

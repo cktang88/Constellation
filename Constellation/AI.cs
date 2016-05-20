@@ -5,13 +5,16 @@ using System.Drawing;
 
 namespace Constellation
 {
+	/*
+	 * NOTE: for some reason, this AI is VERY VERY dependent upon unit move speed
+	 */ 
 	public class AI : Player
 	{
 		public int TimeUntilNextMove = 60;
 		int buildTickInterval;
 		int mainTickInterval;
 		
-		public enum FactoryOwner { me, enemy, noone, anyone, notMe}
+		public enum NodeOwner { me, enemy, noone, anyone, notMe}
 		public enum RoadExistence { yes, no, any}
 		
 		public AI(string name, Color color, int buildTick, int mainTick, Rectangle gameWorld)
@@ -36,106 +39,7 @@ namespace Constellation
 		List<Road> roads;
 		//my armies only
 
-		public void Do(List<Player> players, List<Node> allFacs, List<Road> roads)
-		{
-			
-			//update game info
-			this.players = players;
-			this.roads = roads;
-			this.allFacs = allFacs;
-			
-			//one move per second
-			TimeUntilNextMove--;
-			if (TimeUntilNextMove <= 0) {
-				TimeUntilNextMove = 20;
-				
-				foreach (Node fac in allFacs) {
-					
-					if (!strategy_setup) {
-						if (TopMostFac.owner == null && strategySpots.Contains(1))
-							TryBuildNewRoad(ClosestFactoryTo(TopMostFac, RoadExistence.no,
-								FactoryOwner.me), TopMostFac, roads);
-						else if (BottomMostFac.owner == null && strategySpots.Contains(2)) {
-							TryBuildNewRoad(ClosestFactoryTo(BottomMostFac, RoadExistence.no,
-								FactoryOwner.me), BottomMostFac, roads);
-						} else if (LeftMostFac.owner == null && strategySpots.Contains(3)) {
-							TryBuildNewRoad(ClosestFactoryTo(LeftMostFac, RoadExistence.no,
-								FactoryOwner.me), LeftMostFac, roads);
-						} else if (RightMostFac.owner == null && strategySpots.Contains(4)) {
-							TryBuildNewRoad(ClosestFactoryTo(RightMostFac, RoadExistence.no,
-								FactoryOwner.me), RightMostFac, roads);
-						} else if (CenterMostFac.owner == null && strategySpots.Contains(5)) {
-							TryBuildNewRoad(ClosestFactoryTo(CenterMostFac, RoadExistence.no,
-								FactoryOwner.me), CenterMostFac, roads);
-						} else
-							strategy_setup = true;
-						
-					}
-					
-
-					//my closest factory to "fac" that has no roads between them
-					Node x = ClosestFactoryTo(fac, RoadExistence.no, FactoryOwner.me);
-					
-					//the closest enemy factory to "fac", roads or not
-					Node y = ClosestFactoryTo(fac, RoadExistence.any, FactoryOwner.enemy);
-
-
-					//expand && capture neutral allFacs
-					if (fac.owner == null && strategy_setup
-					    && x != null && y != null) {
-						if (NetIncoming(x) <= 0) { //if i'm not under attack
-							//make sure that i can capture and hold that neutral fac
-							if (RoadBetween(y, fac) != null && x.armyNumHere - roadCost > y.armyNumHere
-							    || RoadBetween(x, fac) == null && x.armyNumHere + 6 > y.armyNumHere)
-								TryBuildNewRoad(x, fac, roads);
-						}
-						
-						//allow AI to get the 1st move
-						if (y.owner.numFactories == 1)
-							TryBuildNewRoad(x, fac, roads);
-					}
-					
-					
-					//prioritize attack on enemy centers closest to it
-					if (fac.owner == this) {
-						List<Node> f_temporary = UTILS.GetClosestList(fac.loc, allFacs);
-						foreach (Node f in f_temporary) {
-							if (f.owner == this || f.owner == null) //makes sure target is an enemy factory
-								continue; 
-							
-							int n = ArmiesToSend(fac, f);
-							if (n <= 0)
-								continue;
-							
-							if (RoadBetween(fac, f) != null)
-								SendArmy(fac, f, n);
-							else if (TryBuildNewRoad(fac, f, roads)) {
-								SendArmy(fac, f, n);
-								
-							}
-						}
-						//TODO: make AI's "big clumps" quickly build & upgrade quick roads to attack enemies
-						
-						
-						//TODO: make use of ArmiesToHelp() method!!!! for reinforcing
-						
-						
-						Harvest(fac); //harvests from fac
-					}
-				}
-				
-				//UPGRADING
-				Road r = ShouldUpgrade();
-				if (r != null) {
-					//NEVER strengthen a road connecting you and enemy
-					TryUpgradeRoad(r.endpoints[0], r.endpoints[1], r);
-					
-				}
-				
-				//NEVER DESTROY ROADS
-				
-			}
-		}
+		
 		
 		#region center-, left-, right-, top-, bottom- most allFacs
 		
@@ -167,8 +71,7 @@ namespace Constellation
 			get
 			{
 				Point p = new Point(gameWorld.Width / 2, 0);
-				Node f = UTILS.GetClosest(p, allFacs);
-				return f;
+				return UTILS.GetClosest(p, allFacs);
 			}
 		}
 		public Node BottomMostFac {
@@ -180,6 +83,128 @@ namespace Constellation
 		}
 		
 		#endregion
+		
+		public void Do(List<Player> players, List<Node> allFacs, List<Road> roads)
+		{
+			
+			//update game info
+			this.players = players;
+			this.roads = roads;
+			this.allFacs = allFacs;
+			
+			//one move per second
+			TimeUntilNextMove--;
+			if (TimeUntilNextMove <= 0) {
+				TimeUntilNextMove = 20;
+				
+				foreach (Node fac in allFacs) {
+					
+					if (!strategy_setup) {
+						if (TopMostFac.owner == null && strategySpots.Contains(1))
+							TryBuildNewRoad(ClosestNodeTo(TopMostFac, RoadExistence.no,
+								NodeOwner.me), TopMostFac, roads);
+						else if (BottomMostFac.owner == null && strategySpots.Contains(2)) {
+							TryBuildNewRoad(ClosestNodeTo(BottomMostFac, RoadExistence.no,
+								NodeOwner.me), BottomMostFac, roads);
+						} else if (LeftMostFac.owner == null && strategySpots.Contains(3)) {
+							TryBuildNewRoad(ClosestNodeTo(LeftMostFac, RoadExistence.no,
+								NodeOwner.me), LeftMostFac, roads);
+						} else if (RightMostFac.owner == null && strategySpots.Contains(4)) {
+							TryBuildNewRoad(ClosestNodeTo(RightMostFac, RoadExistence.no,
+								NodeOwner.me), RightMostFac, roads);
+						} else if (CenterMostFac.owner == null && strategySpots.Contains(5)) {
+							TryBuildNewRoad(ClosestNodeTo(CenterMostFac, RoadExistence.no,
+								NodeOwner.me), CenterMostFac, roads);
+						} else
+							strategy_setup = true;
+						
+					}
+					
+
+					//my closest factory to "fac" that has no roads between them
+					Node x = ClosestNodeTo(fac, RoadExistence.no, NodeOwner.me);
+					
+					//the closest enemy factory to "fac", roads or not
+					Node y = ClosestNodeTo(fac, RoadExistence.any, NodeOwner.enemy);
+
+
+					//expand && capture neutral allFacs
+					if (fac.owner == null && strategy_setup
+					    && x != null && y != null) {
+						if (NetIncoming(x) <= 0) { //if i'm not under attack
+							//make sure that i can capture and hold that neutral fac
+							if (RoadBetween(y, fac) != null && x.armyStrength - roadCost > y.armyStrength
+							    || RoadBetween(x, fac) == null && x.armyStrength + 6 > y.armyStrength)
+								TryBuildNewRoad(x, fac, roads);
+						}
+						
+						//allow AI to get the 1st move
+						if (y.owner.numFactories == 1)
+							TryBuildNewRoad(x, fac, roads);
+					}
+					
+					
+					//prioritize attack on enemy centers closest to it
+					if (fac.owner == this) {
+						List<Node> f_temporary = UTILS.GetClosestList(fac.loc, allFacs);
+						foreach (Node f in f_temporary) {
+							if (f.owner == this || f.owner == null) //makes sure target is an enemy factory
+								continue;
+							
+							int n = ArmiesToSend(fac, f);
+							if (n <= 0)
+								continue;
+							
+							if (RoadBetween(fac, f) != null)
+								SendArmy(fac, f, n);
+							else if (TryBuildNewRoad(fac, f, roads)) {
+								SendArmy(fac, f, n);
+								
+							}
+						}
+						
+						//"big clumps" quickly build & upgrade quick roads to attack enemies
+						if(fac.armyStrength >= 400)
+						{
+							int sum = 0;
+							foreach (Node n in fac.nodesConnected) 
+							{
+								if (n.owner == fac.owner)
+									sum += n.armyStrength;
+							}
+							if(fac.armyStrength > 5 * sum)
+							{
+								Node enemy = ClosestNodeTo(fac, RoadExistence.any, NodeOwner.enemy);
+								if(enemy!=null 
+								   && fac.armyStrength *.8 > enemy.armyStrength //if strong enough
+								   && UTILS.DistSquared(fac.loc, enemy.loc) < 300 * 300) //if nearby
+								{
+									TryBuildNewRoad(fac, enemy, roads);
+									SendArmy(fac, enemy, 4);
+								}
+							}
+						}
+						
+						//TODO: make use of ArmiesToHelp() method!!!! for reinforcing
+						
+						
+						Harvest(fac); //harvests from fac
+					}
+				}
+				
+				//UPGRADING
+				Road r = ShouldUpgrade();
+				if (r != null) {
+					//NEVER strengthen a road connecting you and enemy
+					TryUpgradeRoad(r.endpoints[0], r.endpoints[1], r);
+					
+				}
+				
+				//NEVER DESTROY ROADS
+				
+			}
+		}
+		
 
 
 		/// <summary>
@@ -193,7 +218,7 @@ namespace Constellation
 			Road r = RoadBetween(start, end);
 			
 			if (r == null 
-			    || start.armyNumHere < 80 //don't send small armies
+			    || start.armyStrength < 80 //don't send small armies
 			    || start == end)
 				return;
 			
@@ -213,26 +238,26 @@ namespace Constellation
 		/// <returns>number of armies to send (1/2, 1/4, 1/8, etc)</returns>
 		public int ArmiesToHelp(Node source, Node sink)
 		{
-			int NEED = NetIncoming(sink) - sink.armyNumHere;
+			int NEED = NetIncoming(sink) - sink.armyStrength;
 
 			//can only reinforce other team members,
 			if (source.owner == this
 			    && sink.owner == this
 			    && source != sink
 			    //minimum =(19+1)/2=10 army size reinforcement
-			    && source.armyNumHere > 19
+			    && source.armyStrength > 19
 
 			    //don't reinforce things too far away
 			    && NewUnits(source, sink) <= 40)
 			{
 
 				bool danger = false;
-				foreach (Node f in source.factoriesConnected)
+				foreach (Node f in source.nodesConnected)
 				{
 					//check if i'm in danger --> self-preservation first
 					if (f.owner != this && UTILS.DistSquared(f.loc, source.loc) <
 					    UTILS.DistSquared(source.loc, sink.loc)
-					    && 7 * f.armyNumHere / 8 + NetIncoming(source) > source.armyNumHere)
+					    && 7 * f.armyStrength / 8 + NetIncoming(source) > source.armyStrength)
 						
 						danger = true;
 				}
@@ -243,28 +268,28 @@ namespace Constellation
 					//prioritize combat before harvesting!!
 					if (NEED > 0)
 					{
-						if (source.armyNumHere / 2 > NEED)
+						if (source.armyStrength / 2 > NEED)
 							return 2;
-						else if (3 * source.armyNumHere / 4 > NEED)
+						else if (3 * source.armyStrength / 4 > NEED)
 							return 3;
-						else if (7 * source.armyNumHere / 8 > NEED)
+						else if (7 * source.armyStrength / 8 > NEED)
 							return 4;
 						else return 0;
 					}
 
 					float sourceEnemies = 0;
 					float sinkEnemies = 0;
-					foreach (Node f in source.factoriesConnected)
+					foreach (Node f in source.nodesConnected)
 					{
 						//calculate power of possible attack
 						float a = NewUnits(f, source);
-						if (f.owner != this) sourceEnemies += f.armyNumHere - a;
+						if (f.owner != this) sourceEnemies += f.armyStrength - a;
 					}
-					foreach (Node f in sink.factoriesConnected)
+					foreach (Node f in sink.nodesConnected)
 					{
 						//calculate power of possible attack
 						float a = NewUnits(f, source);
-						if (f.owner != this) sinkEnemies += f.armyNumHere - a;
+						if (f.owner != this) sinkEnemies += f.armyStrength - a;
 					}
 
 					if (sinkEnemies > sourceEnemies)
@@ -290,9 +315,9 @@ namespace Constellation
 			Node enemyofFriend = null; //the enemy closest/connected to friend
 			
 			//selects a connected friendly factory that meet certain criteria:
-			float distSquared = 800 * 800;
-			foreach (Node fac in me.factoriesConnected) {
-				Node temp = ClosestFactoryTo(fac, RoadExistence.yes, FactoryOwner.enemy);
+			float distSquared = 500 * 500;
+			foreach (Node fac in me.nodesConnected) {
+				Node temp = ClosestNodeTo(fac, RoadExistence.yes, NodeOwner.enemy);
 				if (temp != null) {
 					//if friend is directly connected to enemy, immediately send help
 					friend = fac;
@@ -300,7 +325,7 @@ namespace Constellation
 					break;
 				} else {
 					//if no friends directly connected to enemy, get the one that is closest to enemy
-					temp = ClosestFactoryTo(fac, RoadExistence.no, FactoryOwner.enemy);
+					temp = ClosestNodeTo(fac, RoadExistence.no, NodeOwner.enemy);
 					if (temp == null)
 						continue;
 					float d = UTILS.DistSquared(fac.loc, temp.loc);
@@ -316,10 +341,10 @@ namespace Constellation
 				return;
 			
 			Node enemyOfMe;
-			enemyOfMe = ClosestFactoryTo(me, RoadExistence.yes, FactoryOwner.enemy);
+			enemyOfMe = ClosestNodeTo(me, RoadExistence.yes, NodeOwner.enemy);
 			
 			if (enemyOfMe == null) //only harvest if i'm NOT connected to enemy
-				enemyOfMe = ClosestFactoryTo(me, RoadExistence.no, FactoryOwner.enemy);
+				enemyOfMe = ClosestNodeTo(me, RoadExistence.no, NodeOwner.enemy);
 			else
 				return; //if i'm connected to enemy, can't harvest
 			
@@ -328,7 +353,7 @@ namespace Constellation
 				
 			float dist = UTILS.DistSquared(enemyOfMe.loc, me.loc);
 			
-			if (1.2 * dist > UTILS.DistSquared(enemyofFriend.loc, friend.loc)) {
+			if (dist > UTILS.DistSquared(enemyofFriend.loc, friend.loc)) {
 				SendArmy(me, friend, 4); //sendAll
 			}
 		}
@@ -352,14 +377,13 @@ namespace Constellation
 
 		public Road ShouldUpgrade()
 		{
-			//list of all nodes with >= 3 connections
+			//list of all of MY nodes with >= 3 connections
 			foreach (Node f in this.factoriesOwned)
 			{
 				if (f.roadsConnected.Count >= 3
-				    && f.owner == this
-				    && NetIncoming(f) <= f.armyNumHere - roadCost)
+				    && NetIncoming(f) <= f.armyStrength - roadCost)
 				{
-					foreach (Node f2 in f.factoriesConnected)
+					foreach (Node f2 in f.nodesConnected)
 					{
 						//upgrade proportionally end roads leading to each end factory
 						//only upgrade if not under attack
@@ -390,11 +414,11 @@ namespace Constellation
 			{
 				int reinforcement_possible= 0;
 
-				foreach (Node f in toAttack.factoriesConnected)
+				foreach (Node f in toAttack.nodesConnected)
 				{
 					//if reinforcement can come on time
 					if(f.owner!=this && NumTravelTicks(f, toAttack)<=NumTravelTicks(attacker, toAttack))
-						reinforcement_possible += f.armyNumHere / 4;
+						reinforcement_possible += f.armyStrength / 4;
 				}
 				
 				
@@ -403,7 +427,7 @@ namespace Constellation
 				if (RoadBetween(attacker, toAttack) == null) road_expense = roadCost;
 
 				//enemy strength sum
-				float N = toAttack.armyNumHere + 
+				float N = toAttack.armyStrength + 
 					NewUnits(attacker, toAttack) + 
 					reinforcement_possible + 
 					road_expense +
@@ -414,7 +438,7 @@ namespace Constellation
 				else
 				{
 					//only attack if i am nearly sure to win
-					if (.75 * attacker.armyNumHere > N)
+					if (.75 * attacker.armyStrength > N)
 						return 4; //sendAll
 				}
 			}
@@ -459,13 +483,13 @@ namespace Constellation
 			return null;
 		}
 		
-		public Node ClosestFactoryTo(Node fromThis, RoadExistence mustHaveRoad, FactoryOwner f_owner)
+		public Node ClosestNodeTo(Node fromThis, RoadExistence mustHaveRoad, NodeOwner f_owner)
 		{
 			//slight optimization
 			List<Node> f_temp;
 			if(mustHaveRoad == RoadExistence.yes)
 			{
-				f_temp = UTILS.GetClosestList(fromThis.loc, fromThis.factoriesConnected);
+				f_temp = UTILS.GetClosestList(fromThis.loc, fromThis.nodesConnected);
 			}		
 			else
 				f_temp = UTILS.GetClosestList(fromThis.loc, allFacs);
@@ -473,11 +497,11 @@ namespace Constellation
 			foreach (Node f in f_temp) {
 				if (f == fromThis) //closest fac can't be itself!
 					continue;
-				if (f_owner == FactoryOwner.me && f.owner == this ||
-				    f_owner == FactoryOwner.enemy && f.owner != this && f.owner != null ||
-				    f_owner == FactoryOwner.noone && f.owner == null ||
-				    f_owner == FactoryOwner.anyone ||
-				    f_owner == FactoryOwner.notMe && f.owner != this) {
+				if (f_owner == NodeOwner.me && f.owner == this ||
+				    f_owner == NodeOwner.enemy && f.owner != this && f.owner != null ||
+				    f_owner == NodeOwner.noone && f.owner == null ||
+				    f_owner == NodeOwner.anyone ||
+				    f_owner == NodeOwner.notMe && f.owner != this) {
 					
 					if (mustHaveRoad == RoadExistence.no && RoadBetween(fromThis, f) == null
 					   || mustHaveRoad == RoadExistence.any) {
@@ -495,7 +519,7 @@ namespace Constellation
 		/// <param name="f_owner"></param>
 		/// <param name="mustHaveRoad"></param>
 		/// <returns></returns>
-		public Node ClosestFactoryOf(FactoryOwner f_owner, RoadExistence mustHaveRoad)
+		public Node ClosestNodeOf(NodeOwner f_owner, RoadExistence mustHaveRoad)
 		{
 			float d = 2000*2000; Node closestFac=null;
 
@@ -505,11 +529,11 @@ namespace Constellation
 					    || mustHaveRoad == RoadExistence.no && RoadBetween(myFac, f) == null
 					    || mustHaveRoad == RoadExistence.any) {
 						
-						if (f_owner == FactoryOwner.me && f.owner == this ||
-						    f_owner == FactoryOwner.enemy && f.owner != this && f.owner != null ||
-						    f_owner == FactoryOwner.noone && f.owner == null ||
-						    f_owner == FactoryOwner.anyone ||
-						    f_owner == FactoryOwner.notMe && f.owner != this) {
+						if (f_owner == NodeOwner.me && f.owner == this ||
+						    f_owner == NodeOwner.enemy && f.owner != this && f.owner != null ||
+						    f_owner == NodeOwner.noone && f.owner == null ||
+						    f_owner == NodeOwner.anyone ||
+						    f_owner == NodeOwner.notMe && f.owner != this) {
 							
 							if (UTILS.DistSquared(f.loc, myFac.loc) <= d) {
 								d = UTILS.DistSquared(f.loc, myFac.loc);

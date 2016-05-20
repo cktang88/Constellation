@@ -24,18 +24,23 @@ namespace Constellation
         public Road road;
 		public Point loc { get { return new Point((int)Math.Floor(loc_true.X), (int)Math.Floor(loc_true.Y)); } }
         public PointF loc_true; 
-        public Player owner; 
-        public Point target;
-        public float angle;
-        public float speed;
+		public Player owner{ get; private set; }
+		public Point target{ get; private set; }
+		public float angle{ get; private set; }
 		public void Move()
 		{
-			//-------road type determines MOVEMENT SPEED=============  
-			speed = road.travelSpeed;
+			//road type determines move speed
 
+			float speed = road.travelSpeed;
 			loc_true.X += speed * (float)Math.Cos(angle);
 			loc_true.Y += speed * (float)Math.Sin(angle);
 		}
+		
+		/// <summary>
+		/// returns how much of defending army left
+		/// </summary>
+		/// <param name="b"></param>
+		/// <returns></returns>
 		public int Fight(int b)
 		{
 			//returns ENEMY left, and automatically updates myself
@@ -79,14 +84,14 @@ namespace Constellation
         public void CollideEnemy(Army a)
         {
 
+			int meInitial = this.num;
             int meLeft = a.Fight(num);
             if (meLeft <= 0)
-            {
                 shouldRemove = true;
-            }
             else
                 num = meLeft;
-
+            
+			this.owner.dead += meInitial - meLeft;
         }
 		public int radius {
 			get

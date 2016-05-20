@@ -75,7 +75,7 @@ namespace Constellation
 						//total strength------------
 						int strength = 0;
 						foreach (Node f in p.factoriesOwned)
-							strength += f.armyNumHere;
+							strength += f.armyStrength;
 						foreach (Army a in p.armies)
 							strength += a.num;
 
@@ -160,7 +160,7 @@ namespace Constellation
 				//eventually, remove numbers alltogether?
 				
 				using (Font font = new Font(fontStyle, 15F)) {
-					g.DrawString(facNode.armyNumHere.ToString(), font,
+					g.DrawString(facNode.armyStrength.ToString(), font,
 						new SolidBrush(color), facNode.loc.X + radius, facNode.loc.Y);
 				}
             }

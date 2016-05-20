@@ -15,9 +15,9 @@ namespace Constellation
         public const int TimeUntilAddUnit_MAX = 4 * numSecondsBuildUnit; // since timer ticks every .25 secs
         public int TimeUntilAddUnit = TimeUntilAddUnit_MAX;
 
-        public int armyNumHere = 0; Game game;
+        public int armyStrength = 0; Game game;
         public List<Road> roadsConnected = new List<Road>();
-        public List<Node> factoriesConnected = new List<Node>();
+        public List<Node> nodesConnected = new List<Node>();
         Random r = new Random();
         
         
@@ -37,7 +37,7 @@ namespace Constellation
                 if (this.owner == null) 
                     return 5;
                 else
-                    return Math.Max(2, (int)Math.Floor(Math.Sqrt((int)armyNumHere)));
+                    return Math.Max(2, (int)Math.Floor(Math.Sqrt((int)armyStrength)));
             } 
         }
         public void IncreaseArmy()
@@ -47,14 +47,14 @@ namespace Constellation
             {
                 // reset
                 this.TimeUntilAddUnit = TimeUntilAddUnit_MAX;
-                this.armyNumHere++;
+                this.armyStrength++;
             }
         }
 		public void SplitHalf(Node moveHere, Road r)
 		{
 			//default: half of forces sent
-			int j = armyNumHere;
-			armyNumHere -= j / 2;
+			int j = armyStrength;
+			armyStrength -= j / 2;
 			Army a = new Army(j / 2, this, owner, moveHere, r);
 			
 			
@@ -62,8 +62,8 @@ namespace Constellation
 		public void SendAll(Node moveHere, Road r)
 		{
 			// alternative: sends all but 1
-			int j = armyNumHere;
-			armyNumHere = 1;
+			int j = armyStrength;
+			armyStrength = 1;
 			Army a = new Army(j - 1, this, owner, moveHere, r);
 		}
         public void Join(Army a)
@@ -73,22 +73,21 @@ namespace Constellation
             if (a.owner == this.owner)
             {
                 //add forces
-                armyNumHere += a.num;
+                armyStrength += a.num;
             }
             else
             {
-                //fight by making new scram fake standing army at factory
-                int initialForce= armyNumHere;
-                int meLeft=a.Fight(armyNumHere);
-                this.owner.dead += initialForce - Math.Max(0,meLeft);
+                //makes fake temporary army at factory
+                int meLeft = a.Fight(armyStrength);
                 if (meLeft <= 0)
                 {
-                    this.NewOwner(a.owner); armyNumHere += a.num; //defenses lose
+                    this.NewOwner(a.owner); armyStrength = a.num; //defenses lose
                 }
                 else
-                    armyNumHere = meLeft; // defenses win
+                    armyStrength = meLeft; // defenses win
             }
         }
+        
         //TODO: refactor this method!!!
         public void NewOwner(Player p)
         {
@@ -97,7 +96,7 @@ namespace Constellation
             //inform this factory of its new owner
             owner = p; 
             //update status
-            armyNumHere = 0; TimeUntilAddUnit = 4;
+            armyStrength = 0; TimeUntilAddUnit = 4;
             //give factory end new owner
             p.factoriesOwned.Add(this);
         }

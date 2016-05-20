@@ -204,17 +204,17 @@ namespace Constellation
         public void AddPlayerStartNodes()
         {
             Random r = new Random();
-            for (int k = 0; k < players.Count; k++)
+            foreach (Player	p in players)
             {
                 int c = r.Next(1, factorynodes.Count);
                 if (factorynodes[c].owner == null)
                 {
-                    factorynodes[c].NewOwner(players[k]);
+                    factorynodes[c].NewOwner(p);
                 }
                 else
                 {
                     //try again
-                    factorynodes[r.Next(1, factorynodes.Count)].NewOwner(players[k]);
+                    factorynodes[r.Next(1, factorynodes.Count)].NewOwner(p);
                 }
             }
         }
@@ -280,7 +280,7 @@ namespace Constellation
 							
 							particleEmitters.Add(new ParticleEmitter(
 								new Point((a.loc.X + f.loc.X) / 2, (a.loc.Y + f.loc.Y) / 2),
-								a.owner.color, f.owner.color, a.num + f.armyNumHere));
+								a.owner.color, f.owner.color, a.num + f.armyStrength));
                             
 							f.Join(a);
 						}
@@ -332,58 +332,54 @@ namespace Constellation
         {
 			target = UTILS.GetClosest(mouse, factorynodes);
         }
-        public void MouseSlide(Point mouseStart, Point mouseEnd,MouseMode mousemode, bool sendAll)
-        {
-        	//gets closest endpoint factory end where mouse let go
-            Node fac_end = UTILS.GetClosest(mouseEnd, factorynodes);
+		public void MouseSlide(Point mouseStart, Point mouseEnd, MouseMode mousemode, bool sendAll)
+		{
+			//gets closest endpoint factory end where mouse let go
+			Node fac_end = UTILS.GetClosest(mouseEnd, factorynodes);
 
-            //gets closest factory end where mouse started
-            Node fac_start = UTILS.GetClosest(mouseStart, factorynodes);
+			//gets closest factory end where mouse started
+			Node fac_start = UTILS.GetClosest(mouseStart, factorynodes);
             			
-			
-
-            //--------------- HUMANS ONLY MOUSEMOVE!!(can't move for AI)
-
-            if (fac_end.loc != fac_start.loc && fac_start.owner!=null &&!fac_start.owner.is_AI)
-            {
-                //make sure not degenerate
-                int COST = 0;
-                bool alreadyHasRoad = false; 
-                if(fac_start.owner!=null) COST = fac_start.owner.roadCost;
+			if (fac_end.loc == fac_start.loc
+			    || fac_start.owner == null
+			    || fac_start.owner.is_AI) //AI can't use mouse!!!
+				
+				return;
+            
+			//make sure not degenerate
+			int COST = 0;
+			bool alreadyHasRoad = false; 
+			if (fac_start.owner != null)
+				COST = fac_start.owner.roadCost;
                 
-                //can't be foreach b/c will be modified
-				for (int i = 0; i < roads.Count; i++) {
-                	
-                	
-					//finds the road that connects the two things that is owned by player
-					if (roads[i].Connects(fac_start, fac_end)) {
-						if (mousemode == MouseMode.SendArmy) {
-							// can send all armies on base via holding shift key
-							if (sendAll)
-								fac_start.SendAll(fac_end, roads[i]);
-							else
-								fac_start.SplitHalf(fac_end, roads[i]);
+			//can't use foreach b/c might be modified by DestroyRoad() or UpgradeRoad()
+			for (int i = 0; i < fac_start.roadsConnected.Count; i++) { 	
+				//finds the road that connects the two things that is owned by player
+				Road road = fac_start.roadsConnected[i];
+				if (road.endpoints.Contains(fac_end)) {
+					if (mousemode == MouseMode.SendArmy) {
+						// can send all armies on base via holding shift key
+						if (sendAll)
+							fac_start.SendAll(fac_end, road);
+						else
+							fac_start.SplitHalf(fac_end, road);
                             
-						} else if (mousemode == MouseMode.UpgradeRoads) {
+					} else if (mousemode == MouseMode.UpgradeRoads) {
                             
-							fac_start.owner.TryUpgradeRoad(fac_start, fac_end, roads[i]);
-						} else if (mousemode == MouseMode.DestroyRoads) {
-							//must own both nodes end destroy roads for fairness reasons
-							fac_start.owner.TryDestroyRoad(fac_start, fac_end, roads[i], roads);
-						}
-
-						alreadyHasRoad = true;
+						fac_start.owner.TryUpgradeRoad(fac_start, fac_end, road);
+					} else if (mousemode == MouseMode.DestroyRoads) {
+						//must own both nodes end destroy roads for fairness reasons
+						fac_start.owner.TryDestroyRoad(fac_start, fac_end, road, roads);
 					}
-				}
-                if (!alreadyHasRoad)
-                {
-                     //it COSTS more and more army strengths end build one road
 
-                     //only make new factory if road was built
-                    fac_start.owner.TryBuildNewRoad(fac_start, fac_end, roads);
-                }
-            }
-        }
+					alreadyHasRoad = true;
+				}
+			}
+			if (!alreadyHasRoad) {
+				fac_start.owner.TryBuildNewRoad(fac_start, fac_end, roads);
+			}
+            
+		}
         #region statistics
         /*
         float PercentOfArmies(Player me)
@@ -395,8 +391,8 @@ namespace Constellation
             }
             foreach (Node f in factorynodes)
             {
-                total += f.armyNumHere;
-                if (f.owner == me) mystuff += f.armyNumHere;
+                total += f.armyStrength;
+                if (f.owner == me) mystuff += f.armyStrength;
             }
             foreach (Player p in players) { total += p.armies.Count; }
             //integer divide by default if less than 1, so must cast end higher precision type(ex. float)

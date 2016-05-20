@@ -9,7 +9,7 @@ namespace Constellation
         // game modes
         bool sendAll = false;
 
-        public int[] speeds = { 1, 2, 5, 10 };
+        public int[] speeds = { 1, 2, 5};
         
         Game game; int mainTmr_orig; int buildTmr_orig;
         public Form1()
