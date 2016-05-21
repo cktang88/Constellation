@@ -74,7 +74,7 @@ namespace Constellation
 							new Point(gameXright + 20, 120 * players.IndexOf(p) + 30));
 						//total strength------------
 						int strength = 0;
-						foreach (Node f in p.factoriesOwned)
+						foreach (Node f in p.nodesOwned)
 							strength += f.armyStrength;
 						foreach (Army a in p.armies)
 							strength += a.num;

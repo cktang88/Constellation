@@ -24,12 +24,14 @@ namespace Constellation
         //Sounds backgroundSound = new Sounds();
         Renderer renderer;
 		public Rectangle gameWorld;
+		
+		public Random r;
         
 
         public Game(BoardType boardtype, int buildTickInterval, int mainTickInterval, int Numplayers)
         {
             renderer = new Renderer(this, Theme.light);
-			Random r = new Random(); 
+			r = new Random(); 
 			this.boardtype = boardtype; 
 			this.Numplayers = Numplayers;
 			
@@ -37,18 +39,19 @@ namespace Constellation
 			gameWorld = new Rectangle(40, 40, 1200, 650);
 
             if(Numplayers < 2)
-            players.Add(new AI("Ares", Color.Yellow, buildTickInterval, mainTickInterval, this.gameWorld));
+            players.Add(new AI("Ares", Color.Yellow, 
+            	                   buildTickInterval, mainTickInterval, this.gameWorld, players));
 
             if(Numplayers ==0)
-            players.Add(new AI("Poseidon", Color.Cyan, buildTickInterval, mainTickInterval, this.gameWorld));
+            players.Add(new AI("Poseidon", Color.Cyan, 
+            	                   buildTickInterval, mainTickInterval, this.gameWorld, players));
 
             if(Numplayers > 0)
             players.Add(new Player("Kwuang", Color.Red, this.gameWorld));
 
             if(Numplayers==2)
             players.Add(new Player("Hulk", Color.Green, this.gameWorld));
-
-			
+	
 
             Point midpoint = new Point((gameWorld.X + gameWorld.Width) / 2, 
 			                           (gameWorld.Y + gameWorld.Height) / 2);

@@ -18,7 +18,7 @@ namespace Constellation
 		public bool is_AI = false;
         
 		public List<Army> armies = new List<Army>();
-		public List<Node> factoriesOwned = new List<Node>();
+		public List<Node> nodesOwned = new List<Node>();
 		
 		protected Rectangle gameWorld;
         
@@ -81,7 +81,7 @@ namespace Constellation
 			armies.Remove(a);
 		}
 		public int numFactories {
-			get { return factoriesOwned.Count; }
+			get { return nodesOwned.Count; }
 		}
 		
 		

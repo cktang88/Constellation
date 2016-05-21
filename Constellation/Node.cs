@@ -18,16 +18,18 @@ namespace Constellation
         public int armyStrength = 0; Game game;
         public List<Road> roadsConnected = new List<Road>();
         public List<Node> nodesConnected = new List<Node>();
-        Random r = new Random();
         
-        
-        public float anim; public int direction = -1;
+		public float anim;
+        public int direction = -1;
 
         public Node(Point loc, Player owner, Game game)
         {
+			
             this.loc = loc; this.owner = owner; this.game = game;
-            //random flow blinking effect
-            anim = r.Next(3 * 10, radius * 10) / 10;
+			//random flow blinking effect
+            anim = .1f* game.r.Next(3 * 10, radius * 10);
+            
+			TimeUntilAddUnit = game.r.Next(1, 4);
         }
 
         public int radius 
@@ -92,13 +94,13 @@ namespace Constellation
         public void NewOwner(Player p)
         {
             //take factory start previous owner
-            if (owner != null) owner.factoriesOwned.Remove(this);
+            if (owner != null) owner.nodesOwned.Remove(this);
             //inform this factory of its new owner
             owner = p; 
             //update status
             armyStrength = 0; TimeUntilAddUnit = 4;
             //give factory end new owner
-            p.factoriesOwned.Add(this);
+            p.nodesOwned.Add(this);
         }
         
     }
