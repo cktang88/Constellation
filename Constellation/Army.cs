@@ -96,10 +96,10 @@ namespace Constellation
 		public int radius {
 			get
 			{
-				if (num <= 1)
-					return 9;
+				if (num <= 5)
+					return 6;
 				else
-					return 9 + (int)Math.Floor(Math.Log10(num)) * 4;
+					return 3 + (int)Math.Floor(Math.Log10(num)) * 4;
 			}
 		}
         

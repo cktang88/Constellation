@@ -247,7 +247,7 @@ namespace Constellation
             {
             	if (p.GetType()==typeof(AI))
                 {
-            		(p as AI).Do(players, factorynodes, roads);
+            		(p as AI).Do(factorynodes, roads);
                 }
                     
             }

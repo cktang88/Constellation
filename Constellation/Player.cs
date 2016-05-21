@@ -87,17 +87,20 @@ namespace Constellation
 		
 		public bool TryBuildNewRoad(Node start, Node end, List<Road> roads)
 		{
-			if (start == null)
+			//checks if can legitimately build new road
+			if (start == null 
+			    || start == end 
+			    || start.owner != this)
 				return false;
+			
+			
 			foreach (Road r in start.roadsConnected) {
 				if (r.Connects(start, end))
 					return false; //already has road
 			}
 
-			if (start.armyStrength >= start.owner.roadCost//if enough money
-			    && start != end//if not the same factory node
-			    && start.owner == this) { //i own the start factory node
-				
+			if (start.armyStrength >= start.owner.roadCost)//if enough money
+			{
 				start.armyStrength -= start.owner.roadCost;
 				NewRoad(start, end, roads);
 				return true;
@@ -148,15 +151,16 @@ namespace Constellation
 		public void NewRoad(Node start, Node end, List<Road> roads)
 		{
 			Road r = new Road(start, end, RoadTypes.Dirt);
-			foreach (Node f in r.endpoints) {
-				f.roadsConnected.Add(r);
-				f.nodesConnected.Add(r.endpoints[1 - r.endpoints.IndexOf(f)]);
-			}
-			roads.Add(r);
-                
-			//if neutral fac
 			
-			if (end.owner == null) {
+			//update information
+			start.roadsConnected.Add(r);
+			end.roadsConnected.Add(r);
+			start.nodesConnected.Add(end);
+			end.nodesConnected.Add(start);
+			
+			roads.Add(r);
+	
+			if (end.owner == null) { //if neutral fac
 				/*
 				particleEmitters.Add(new ParticleEmitter(
 					end.loc, start.owner.color, start.owner.color, 10));
