@@ -14,3 +14,11 @@ C:\Users\tiger_000\Documents\GitHub\Constellation\Constellation\obj\Debug\Conste
 C:\Users\tiger_000\Documents\GitHub\Constellation\Constellation\obj\Debug\Constellation.csproj.GenerateResource.Cache
 C:\Users\tiger_000\Documents\GitHub\Constellation\Constellation\obj\Debug\Constellation.exe
 C:\Users\tiger_000\Documents\GitHub\Constellation\Constellation\obj\Debug\Constellation.pdb
+C:\Users\Apache\Documents\GitHub\Constellation\Constellation\bin\Debug\Constellation.exe.config
+C:\Users\Apache\Documents\GitHub\Constellation\Constellation\bin\Debug\Constellation.exe
+C:\Users\Apache\Documents\GitHub\Constellation\Constellation\bin\Debug\Constellation.pdb
+C:\Users\Apache\Documents\GitHub\Constellation\Constellation\obj\Debug\Constellation.csprojResolveAssemblyReference.cache
+C:\Users\Apache\Documents\GitHub\Constellation\Constellation\obj\Debug\Constellation.Form1.resources
+C:\Users\Apache\Documents\GitHub\Constellation\Constellation\obj\Debug\Constellation.csproj.GenerateResource.Cache
+C:\Users\Apache\Documents\GitHub\Constellation\Constellation\obj\Debug\Constellation.exe
+C:\Users\Apache\Documents\GitHub\Constellation\Constellation\obj\Debug\Constellation.pdb

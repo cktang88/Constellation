@@ -103,8 +103,8 @@ namespace Constellation
                 sendAll = true;
             }
             
-            if (e.KeyCode == Keys.Add) SimSpeed++;
-            if (e.KeyCode == Keys.Subtract) SimSpeed--;
+            if (e.KeyCode == Keys.M) SimSpeed++;
+            if (e.KeyCode == Keys.N) SimSpeed--;
 
             SimSpeed = Math.Min(Math.Max(SimSpeed, 0), speeds.Length-1); // keep in bounds
             int a = speeds[SimSpeed];
