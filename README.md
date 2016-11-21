@@ -1,16 +1,23 @@
 # Constellation
-A 2D real-time strategy game that rewards long-term planning more than quick reflexes.
+A 2D real-time strategy game that rewards long-term planning more than quick reflexes. A good strategy hinges on building an efficient road network, and knowing when to expand and when to reinforce.
 
-![Gameplay image](http://imgur.com/a/yvr14)
+![Gameplay image](http://i.imgur.com/qW8UbAZ.png)
 
 ###Objective
 Conquering the galaxy by colonizing every star.
+
+###Features
+* Multiple maps
+* Challenging AI for single-player mode
+* Vector graphics
+
+###Try it out!
+Download the project, then run the executable at "Constellation/bin/Debug/Constellation.exe". Have fun!
 
 ##Controls
 * **Z** - Build a new road
 * **C** - Upgrade a road
 * **X** - Destroy a road
-
 
 ##Rules
 
@@ -31,10 +38,6 @@ The outcome of a battle is realistically determined via Lancaster's Law. Essenti
 
 ####Star colonization
 Additionally, roads built from an occupied star to an unoccupied star will colonize the unoccupied star. Stars can also be occupied by sending an army to that star via a road. The army will battle the hostile armies on the star, and the winner controls the star.
-
-###Supported gamplay modes
-* local multiplayer
-* single player vs AI.
 
 ###Notes
 Internet multiplayer via UDP sockets is in progress!
