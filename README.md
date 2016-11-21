@@ -30,6 +30,8 @@ Roads are the only way to connect stars. Roads can only be constructed from a pl
 ####Upgrading a road
 Roads can be upgraded up to three times. Each upgrade allows armies to move faster across that road. However, each upgrade has a cost, which is deducted from the star from which the road originates.
 
+![Road upgrading](http://i.imgur.com/XJBHvDl.png)
+
 ####Sending armies
 Any player can send armies from a given star using any road connected to that star. Note that this means a road connecting two stars allows armies of both stars to be sent to each other. Once an army is on a road, it cannot change directions. Two armies of different players heading in opposite directions on a road will battle when they meet.
 
