@@ -28,7 +28,7 @@ namespace Constellation
 			return GetClosestList(pt, units)[0];
 		}
 		/// <summary>
-		/// returns a list of all units SORTED BY NEAREST TO FARTHEST
+		/// returns a list of all units, sorted from closest to farthest
 		/// </summary>
 		/// <param name="pt"></param>
 		/// <param name="units"></param>

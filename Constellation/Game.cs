@@ -7,14 +7,9 @@ namespace Constellation
 {
 	public class Game
 	{
-		/*
-        
-         * NOTE TO SELF DEVELOPER:---------------------------------------------------------------
-        note: remodel this entire game end focus on ambient SOUND!!!
-        
-        ---on small screens, things will move way faster b/c less pixels--> must correct this so that
-        game will play the same on all screen sizes with same absolute distance, but will only DISPLAY differently
-        
+		/* TODO:
+       	 * Currently, on small screens, things move faster b/c less pixels
+		 * Make game speed resolution independent
          */
          
          
@@ -37,7 +32,7 @@ namespace Constellation
 			BUILDTICK = buildTickInterval;
 			MAINTICK = mainTickInterval;
         	
-			renderer = new Renderer(this, Theme.light);
+			renderer = new Renderer(Theme.light);
 			r = new Random(); 
 			this.boardtype = boardtype; 
 			this.Numplayers = Numplayers;
@@ -191,10 +186,13 @@ namespace Constellation
 				}
 			}
 		}
-		public List<Node> factorynodes = new List<Node>();
+		public static List<Node> factorynodes = new List<Node>();
+		public static List<Player> players = new List<Player>();
+		public static List<Road> roads = new List<Road>();
+		
+		
 		public List<Point> fac_LocList = new List<Point>();
-		public List<Player> players = new List<Player>();
-		public List<Road> roads = new List<Road>();
+		
 		public List<ParticleEmitter> particleEmitters = new List<ParticleEmitter>();
 		#endregion
 
@@ -217,12 +215,12 @@ namespace Constellation
 			//thinking for all AI players
 			foreach (Player p in players) {
 				if (p.GetType() == typeof(AI)) {
-					(p as AI).Do(factorynodes, roads);
+					(p as AI).Do();
 				}
                     
 			}
             
-			//particle engine!
+			//particle engine
 			for (int i = 0; i < particleEmitters.Count; i++) {
 				particleEmitters[i].MoveParticles();
             	
@@ -252,6 +250,7 @@ namespace Constellation
                             
 							f.Join(a);
 						}
+						
 					}
 				}
                 
@@ -275,7 +274,7 @@ namespace Constellation
 		public void Draw(Graphics g, Theme theme, bool showStats)
 		{
 			renderer.UpdateInfo(showStats, theme);
-			renderer.Render(g);
+			renderer.Render(this, g);
 		}
 		public Player CheckForWinner()
 		{
@@ -334,14 +333,14 @@ namespace Constellation
 						fac_start.owner.TryUpgradeRoad(fac_start, fac_end, road);
 					} else if (mousemode == MouseMode.DestroyRoads) {
 						//must own both nodes end destroy roads for fairness reasons
-						fac_start.owner.TryDestroyRoad(fac_start, fac_end, road, roads);
+						fac_start.owner.TryDestroyRoad(fac_start, fac_end, road);
 					}
 
 					alreadyHasRoad = true;
 				}
 			}
 			if (!alreadyHasRoad) {
-				fac_start.owner.TryBuildNewRoad(fac_start, fac_end, roads);
+				fac_start.owner.TryBuildNewRoad(fac_start, fac_end);
 			}
             
 		}

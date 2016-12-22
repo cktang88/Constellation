@@ -12,14 +12,16 @@ namespace Constellation
 		int[] speeds = { 1, 2, 5 };
         
 		Game game;
-		int mainTmr_orig;
-		int buildTmr_orig;
+		
+		bool showStats = false;
+		Theme theme = Theme.dark;
+		
 		public Form1()
 		{
 
 			InitializeComponent();
-			mainTmr_orig = tmr_main.Interval;
-			buildTmr_orig = tmr_creation.Interval;
+			Game.MAINTICK = tmr_main.Interval;
+			Game.BUILDTICK = tmr_creation.Interval;
 
 			//-------maximimizes end user screen
 			this.WindowState = FormWindowState.Maximized;
@@ -67,7 +69,9 @@ namespace Constellation
 
 		void helpToolStripMenuItem_Click(object sender, EventArgs e)
 		{
-			MessageBox.Show("Use M and N to control game speed. Switch mousemode with Z, X, and C. Hold down shift to send all armies.");
+			MessageBox.Show("Use M and N to control game speed. " +
+			"Switch mousemode with Z, X, and C. " +
+			"Hold down shift to send all armies.");
 		}
 
 		MouseMode _mousemode = MouseMode.SendArmy;
@@ -77,17 +81,14 @@ namespace Constellation
 				_mousemode = value;
 			}
 		}
-		bool showStats = false;
+		
 		private void showStatsToolStripMenuItem_Click(object sender, EventArgs e)
 		{
 			showStats = !showStats;
-			if (showStats)
-				showStatsToolStripMenuItem.Text = "Hide Stats";
-			else
-				showStatsToolStripMenuItem.Text = "Show Stats";
+			showStatsToolStripMenuItem.Text = showStats ? "Hide Stats" : "Show Stats";
             
 		}
-		Theme theme = Theme.dark;
+		
 
         
 		private void Form1_KeyDown(object sender, KeyEventArgs e)
@@ -112,8 +113,8 @@ namespace Constellation
 			SimSpeed = Math.Min(Math.Max(SimSpeed, 0), speeds.Length - 1); // keep in bounds
 			int a = speeds[SimSpeed];
 
-			this.tmr_creation.Interval = buildTmr_orig / a;
-			this.tmr_main.Interval = mainTmr_orig / a;
+			this.tmr_creation.Interval = Game.BUILDTICK / a;
+			this.tmr_main.Interval = Game.MAINTICK / a;
 			this.Text = "Constellation    [ Gamespeed: " + a + "X ]";
 
 		}
@@ -180,7 +181,7 @@ namespace Constellation
 		{
 			tmr_main.Enabled = false;
 			tmr_creation.Enabled = false;
-			foreach (Player p in game.players) {
+			foreach (Player p in Game.players) {
 				MessageBox.Show("Pick a color for " + p.name);
 				DialogResult result = colorDialog1.ShowDialog(this);
 				// See if user pressed ok.

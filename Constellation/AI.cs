@@ -5,6 +5,7 @@ using System.Drawing;
 
 namespace Constellation
 {
+	
 	/*
 	 * =================== NOTES: 
 	 * 
@@ -22,23 +23,6 @@ namespace Constellation
 		
 		bool isPlayingHuman = false;
 		//if its playing humans, play slower (no simultaneous moves, etc.)
-		
-		enum NodeOwner
-		{
-			me,
-			enemy,
-			noone,
-			anyone,
-			notMe
-
-		}
-		enum RoadExistence
-		{
-			yes,
-			no,
-			any
-
-		}
 		
 		public AI(string name, Color color, Rectangle gameWorld, List<Player> players)
 			: base(name, color, gameWorld)
@@ -60,17 +44,12 @@ namespace Constellation
 			
 		}
 		List<int> strategySpots = new List<int>();
-		List<Node> allFacs;
 		//all factories in the game
 		bool strategy_setup = false;
 		List<Road> roads;
 		
-		public void Do(List<Node> allFacs, List<Road> roads)
+		public void Do()
 		{
-			
-			//update game info
-			this.roads = roads;
-			this.allFacs = allFacs; //with updated owners, roads, etc.
 			
 			if (isPlayingHuman) {
 				//one move per second?
@@ -85,19 +64,19 @@ namespace Constellation
 			if (!strategy_setup) {
 				if (TopMostFac.owner == null && strategySpots.Contains(1))
 					TryBuildNewRoad(ClosestNodeTo(TopMostFac, RoadExistence.no,
-						NodeOwner.me), TopMostFac, roads);
+						NodeOwner.me), TopMostFac);
 				else if (BottomMostFac.owner == null && strategySpots.Contains(2)) {
 					TryBuildNewRoad(ClosestNodeTo(BottomMostFac, RoadExistence.no,
-						NodeOwner.me), BottomMostFac, roads);
+						NodeOwner.me), BottomMostFac);
 				} else if (LeftMostFac.owner == null && strategySpots.Contains(3)) {
 					TryBuildNewRoad(ClosestNodeTo(LeftMostFac, RoadExistence.no,
-						NodeOwner.me), LeftMostFac, roads);
+						NodeOwner.me), LeftMostFac);
 				} else if (RightMostFac.owner == null && strategySpots.Contains(4)) {
 					TryBuildNewRoad(ClosestNodeTo(RightMostFac, RoadExistence.no,
-						NodeOwner.me), RightMostFac, roads);
+						NodeOwner.me), RightMostFac);
 				} else if (CenterMostFac.owner == null && strategySpots.Contains(5)) {
 					TryBuildNewRoad(ClosestNodeTo(CenterMostFac, RoadExistence.no,
-						NodeOwner.me), CenterMostFac, roads);
+						NodeOwner.me), CenterMostFac);
 				} else
 					strategy_setup = true;
 				
@@ -106,8 +85,8 @@ namespace Constellation
 						
 			}
 			//capturing new nodes...
-			foreach (Node fac in allFacs) {	
-				//expand && capture neutral allFacs
+			foreach (Node fac in Game.factorynodes) {	
+				//expand && capture neutral Game.factorynodes
 				//NOTE: a lot of checks can be avoided b/c if factory owner is null, that means
 				//that no player owns it, and therefore there are no roads connected to it!
 				if (fac.owner == null && strategy_setup) {
@@ -125,7 +104,7 @@ namespace Constellation
 							    || UTILS.DistSquared(x.loc, fac.loc) < UTILS.DistSquared(y.loc, fac.loc)
 							    && x.armyStrength + 5 > y.armyStrength) {
 								
-								TryBuildNewRoad(x, fac, roads);
+								TryBuildNewRoad(x, fac);
 								if (this.isPlayingHuman)
 									return; //SLOWS DOWN FOR HUMANS
 							}
@@ -133,14 +112,14 @@ namespace Constellation
 						
 						//allow AI to get the 1st move
 						if (y.owner.numFactories == 1)
-							TryBuildNewRoad(x, fac, roads);
+							TryBuildNewRoad(x, fac);
 					}
 				}
 					
 					
 				#region =====   ARMY MOVEMENT   =====
 				if (fac.owner == this) {
-					List<Node> f_temporary = UTILS.GetClosestList(fac.loc, allFacs);
+					List<Node> f_temporary = UTILS.GetClosestList(fac.loc, Game.factorynodes);
 					foreach (Node enemy in f_temporary) {
 						
 						//verify target is an enemy
@@ -163,13 +142,13 @@ namespace Constellation
 							/* if there is a friendly node that i can pass my army to that ...
 							 * ... will allow it to attack enemy, don't build new road
 							 */
-							Node intermediate = GetIntermediate(fac, enemy, NodeOwner.me);
+							Node intermediate = Network.GetIntermediate(this, fac, enemy, NodeOwner.me);
 							
 							if (intermediate != null) {
 								SendArmy(fac, intermediate, n);
 								if (this.isPlayingHuman)
 									return; //SLOWS DOWN FOR HUMANS
-							} else if (TryBuildNewRoad(fac, enemy, roads)) {
+							} else if (TryBuildNewRoad(fac, enemy)) {
 								SendArmy(fac, enemy, n);
 								if (this.isPlayingHuman)
 									return; //SLOWS DOWN FOR HUMANS
@@ -192,7 +171,7 @@ namespace Constellation
 								    //&& fac.nodesConnected.Count <= 2//it is isolated
 								    && UTILS.DistSquared(fac.loc, enemy.loc) < 300 * 300) { //if nearby
 									
-									TryBuildNewRoad(fac, enemy, roads);
+									TryBuildNewRoad(fac, enemy);
 									SendArmy(fac, enemy, 4);
 									
 									if (this.isPlayingHuman)
@@ -205,7 +184,7 @@ namespace Constellation
 									if (UTILS.DistSquared(fac.loc, enemy.loc) >
 									    UTILS.DistSquared(friend.loc, enemy.loc)) {
 										
-										TryBuildNewRoad(fac, friend, roads);
+										TryBuildNewRoad(fac, friend);
 										SendArmy(fac, friend, 4);
 										
 										if (this.isPlayingHuman)
@@ -380,17 +359,17 @@ namespace Constellation
 					
 					
 					/*
-					 * Contrary to popular belief, deleting roads can be useful!
+					 * Deleting roads can be useful!
 					 * 1. looks better
-					 * 2. prevents AI from wasting computation resources each time
-					 * 3. makes AI algorithms work better b/c will only account for useful roads to travel on
+					 * 2. prevents AI from wasting computations
+					 * 3. AI algorithms work better b/c will only use short roads to travel on
 					 * 
 					 */
 					if (lengthSquared > 400 * 400
 					    //never leave a node unconnected
 					    && f.roadsConnected.Count > 1
 					    && f2.roadsConnected.Count > 1) {
-						if (TryDestroyRoad(f, f2, r, roads)) {
+						if (TryDestroyRoad(f, f2, r)) {
 							
 							if (this.isPlayingHuman)
 								return true; //SLOWS DOWN FOR HUMANS
@@ -454,116 +433,7 @@ namespace Constellation
 			return 0;
 		}
 		
-		Node ClosestNodeTo(Node fromThis, RoadExistence mustHaveRoad, NodeOwner f_owner)
-		{
-			//slight optimization
-			List<Node> f_temp;
-			if (mustHaveRoad == RoadExistence.yes) {
-				f_temp = UTILS.GetClosestList(fromThis.loc, fromThis.nodesConnected);
-			} else
-				f_temp = UTILS.GetClosestList(fromThis.loc, allFacs);
-			
-			foreach (Node f in f_temp) {
-				if (f == fromThis) //closest fac can't be itself
-					continue;
-				if (f_owner == NodeOwner.me && f.owner == this ||
-				    f_owner == NodeOwner.enemy && f.owner != this && f.owner != null ||
-				    f_owner == NodeOwner.noone && f.owner == null ||
-				    f_owner == NodeOwner.anyone ||
-				    f_owner == NodeOwner.notMe && f.owner != this) {
-					
-					if (mustHaveRoad == RoadExistence.no && Network.RoadBetween(fromThis, f) == null
-					    || mustHaveRoad == RoadExistence.any) {
-										
-						return f;
-					}
-				}
-			}
-			return null;
-		}
-		/// <summary>
-		/// finds the closest factory of a certain owner or group of owners from ANY one of
-		/// my own allFacs
-		/// </summary>
-		/// <param name="f_owner"></param>
-		/// <param name="mustHaveRoad"></param>
-		/// <returns></returns>
-		Node ClosestNodeOf(NodeOwner f_owner, RoadExistence mustHaveRoad)
-		{
-			float d = 2000 * 2000;
-			Node closestFac = null;
-
-			foreach (Node myFac in this.nodesOwned) {
-				foreach (Node f in allFacs) {
-					if (mustHaveRoad == RoadExistence.yes && Network.RoadBetween(myFac, f) != null
-					    || mustHaveRoad == RoadExistence.no && Network.RoadBetween(myFac, f) == null
-					    || mustHaveRoad == RoadExistence.any) {
-						
-						if (f_owner == NodeOwner.me && f.owner == this ||
-						    f_owner == NodeOwner.enemy && f.owner != this && f.owner != null ||
-						    f_owner == NodeOwner.noone && f.owner == null ||
-						    f_owner == NodeOwner.anyone ||
-						    f_owner == NodeOwner.notMe && f.owner != this) {
-							
-							if (UTILS.DistSquared(f.loc, myFac.loc) <= d) {
-								d = UTILS.DistSquared(f.loc, myFac.loc);
-								closestFac = f;
-							}
-						}
-					}
-				}
-				
-			}
-			return closestFac;
-		}
-		/// <summary>
-		/// finds the first Node that is connected to both start & end, if any
-		/// </summary>
-		/// <returns></returns>
-		Node GetIntermediate(Node start, Node end, NodeOwner f_owner)
-		{
-			Node intermediate = null;
-			foreach (Node mid in start.nodesConnected) {
-				//if NodeOwner.anyone, then always passes
-				if (f_owner == NodeOwner.me && mid.owner != this ||
-				    f_owner == NodeOwner.enemy && (mid.owner == this || mid.owner == null) ||
-				    f_owner == NodeOwner.noone && mid.owner != null ||
-				    f_owner == NodeOwner.notMe && mid.owner == this)
-					continue;
-				
-				if (mid.nodesConnected.Contains(end)
-					//and if not counterproductive
-				    && .8 * UTILS.DistSquared(mid.loc, end.loc)
-				    < UTILS.DistSquared(start.loc, end.loc))
-					intermediate = mid;
-			}
-			return intermediate;
-		}
 		
-		/// <summary>
-		/// Returns net NEARBY incoming armies
-		/// friendlies & enemies balance out
-		/// </summary>
-		/// <param name="f"></param>
-		/// <returns></returns>
-		int NetNearbyIncoming(Node f)
-		{
-			int attacker_pop = 0;
-			foreach (Road r in f.roadsConnected) {
-				foreach (Army a in r.armies) {
-					if (a.target != f.loc)
-						continue;
-					if (UTILS.DistSquared(a.loc, f.loc) > 300 * 300) //only counts nearby things
-						continue;
-					if (a.owner == this)
-						attacker_pop += a.num;
-					else
-						attacker_pop -= a.num;
-					
-				}
-			}
-			return attacker_pop;
-		}
 		/// <summary>
 		/// sends N armies from start to end
 		/// </summary>
@@ -587,38 +457,48 @@ namespace Constellation
 				start.SendAll(end, r);
 		}
 		
-		#region center-, left-, right-, top-, bottom- most allFacs
+		
+		//wrapper methods
+		private Node ClosestNodeTo(Node fromThis, RoadExistence mustHaveRoad, NodeOwner f_owner)
+		{
+			return Network.ClosestNodeTo(this, fromThis, mustHaveRoad, f_owner);
+		}
+		private int NetNearbyIncoming(Node f, int maxdist = 300){
+			return Network.NetNearbyIncoming(this, f, maxdist);
+		}
+		
+		#region center-, left-, right-, top-, bottom- most Game.factorynodes
 		
 		//---------------------------------------------these are not the absolute closest factory
 		//to the certain location strategic point, they have been purposely "fuzzied up"
 		Node CenterMostFac {
 			get {
 				Point p = new Point(gameWorld.Width / 2, gameWorld.Height / 2);
-				return UTILS.GetClosest(p, allFacs);
+				return UTILS.GetClosest(p, Game.factorynodes);
 			}
 		}
 		Node LeftMostFac {
 			get {
 				Point p = new Point(0, gameWorld.Height / 2);
-				return UTILS.GetClosest(p, allFacs);
+				return UTILS.GetClosest(p, Game.factorynodes);
 			}
 		}
 		Node RightMostFac {
 			get {
 				Point p = new Point(gameWorld.Width, gameWorld.Height / 2);
-				return UTILS.GetClosest(p, allFacs);
+				return UTILS.GetClosest(p, Game.factorynodes);
 			}
 		}
 		Node TopMostFac {
 			get {
 				Point p = new Point(gameWorld.Width / 2, 0);
-				return UTILS.GetClosest(p, allFacs);
+				return UTILS.GetClosest(p, Game.factorynodes);
 			}
 		}
 		Node BottomMostFac {
 			get {
 				Point p = new Point(gameWorld.Width / 2, gameWorld.Height);
-				return UTILS.GetClosest(p, allFacs);
+				return UTILS.GetClosest(p, Game.factorynodes);
 			}
 		}
 		

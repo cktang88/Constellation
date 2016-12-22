@@ -7,8 +7,7 @@ namespace Constellation
 {
     public class Renderer
     {
-        Theme theme; 
-        Game game; 
+        Theme theme;
         bool showStats;
 		Graphics g;
 		Color c {
@@ -20,17 +19,13 @@ namespace Constellation
 					return Color.Black;
 			}
 		}
-		List<Player> players = new List<Player>();
 
         String fontStyle = "Microsoft Sans Serif";
-
-        //NOTE: solid brushes are MUCH more efficient than Pens!!!
         
         
-        public Renderer(Game game, Theme theme, bool showStats = false)
+        public Renderer(Theme theme, bool showStats = false)
         {
-            this.theme = theme; this.game = game; this.showStats = showStats;
-            this.players = game.players;
+            this.theme = theme; this.showStats = showStats;
         }
         public static void DrawParticles(Graphics g, ParticleEmitter partEmit)
         {
@@ -49,8 +44,10 @@ namespace Constellation
         {
             this.showStats = showStats; this.theme = theme;
         }
-		public void Render(Graphics g)
+		public void Render(Game game, Graphics g)
 		{
+			List<Player> players = Game.players;
+			
 			this.g = g;
 			//draws EVERYTHING
 
@@ -66,7 +63,7 @@ namespace Constellation
 			if (showStats) {
 				//Brush b = new SolidBrush(Color.FromArgb(128, p.color));
 				
-				foreach (Player p in game.players) {
+				foreach (Player p in Game.players) {
                     Brush b = new SolidBrush(p.color);
 
 					using (Font font = new Font(fontStyle, 16F)) {
@@ -106,11 +103,11 @@ namespace Constellation
 					Draw(a);
 				}
 			}
-			foreach (Node f in game.factorynodes)
+			foreach (Node f in Game.factorynodes)
 				Draw(f);
 			if (game.target != null)
 				DrawTarget(game.target); // draw where the fleet will be sent
-			foreach (Road r in game.roads)
+			foreach (Road r in Game.roads)
 				Draw(r);
 
 		}

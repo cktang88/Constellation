@@ -85,7 +85,7 @@ namespace Constellation
 		}
 		
 		
-		public bool TryBuildNewRoad(Node start, Node end, List<Road> roads)
+		public bool TryBuildNewRoad(Node start, Node end)
 		{
 			//checks if can legitimately build new road
 			if (start == null 
@@ -102,20 +102,20 @@ namespace Constellation
 			if (start.armyStrength >= start.owner.roadCost)//if enough money
 			{
 				start.armyStrength -= start.owner.roadCost;
-				NewRoad(start, end, roads);
+				NewRoad(start, end);
 				return true;
 			}
 			return false;
             
 		}
-		public bool TryDestroyRoad(Node start, Node end, Road r, List<Road> roads)
+		public bool TryDestroyRoad(Node start, Node end, Road r)
 		{
 			//free
 			if (r.Connects(start, end)
 			    && start.owner ==this && end.owner==this
 			    && r.armies.Count==0) { //and if noone is on the road
 
-				DestroyRoad(r, roads);
+				DestroyRoad(r);
 				return true;
 			}
 			return false;
@@ -138,7 +138,7 @@ namespace Constellation
         {
             r.Upgrade();
         }
-        public void DestroyRoad(Road r, List<Road> roads)
+        public void DestroyRoad(Road r)
         {
             foreach (Node f in r.endpoints)
 	        {		 
@@ -146,9 +146,9 @@ namespace Constellation
                 f.roadsConnected.Remove(r);
                 f.nodesConnected.Remove(r.endpoints[1-r.endpoints.IndexOf(f)]);
             }
-            roads.Remove(r);
+            Game.roads.Remove(r);
         }
-		public void NewRoad(Node start, Node end, List<Road> roads)
+		public void NewRoad(Node start, Node end)
 		{
 			Road r = new Road(start, end, RoadTypes.Dirt);
 			
@@ -158,7 +158,7 @@ namespace Constellation
 			start.nodesConnected.Add(end);
 			end.nodesConnected.Add(start);
 			
-			roads.Add(r);
+			Game.roads.Add(r);
 	
 			if (end.owner == null) { //if neutral fac
 				/*
