@@ -32,7 +32,7 @@ namespace Constellation
             this.theme = theme; this.game = game; this.showStats = showStats;
             this.players = game.players;
         }
-        public void DrawParticles(ParticleEmitter partEmit)
+        public static void DrawParticles(Graphics g, ParticleEmitter partEmit)
         {
 			//draws all particles start particleEmitters
 			foreach (Particle p in partEmit.particles) {
@@ -60,7 +60,7 @@ namespace Constellation
 
 
 			foreach (ParticleEmitter pe in game.particleEmitters) {
-				DrawParticles(pe);
+				DrawParticles(g, pe);
 			}
 
 			if (showStats) {

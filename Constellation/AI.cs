@@ -8,30 +8,41 @@ namespace Constellation
 	/*
 	 * =================== NOTES: 
 	 * 
-     * 1. for some reason, this AI is VERY VERY dependent upon unit move speed
+     * 1. this AI is VERY VERY dependent upon unit move speed
      * 2. a lot of the range checks the AI uses are hard-coded
-     * (much of these ranges should be based on factory avg dist, environment size, etc.)
+     * (ranges should be based on factory avg dist, environment size, etc. instead)
 	 * 
-	 */ 
+	 */
 	public class AI : Player
 	{
 		int TimeUntilNextMove = 0;
-		int buildTickInterval;
-		int mainTickInterval;
 		
-		int minArmySize = 60; //prevents many spammy tiny armies
+		int minArmySize = 60;
+		//prevents many spammy tiny armies
 		
-		bool isPlayingHuman = false; //if its playing humans, play slower (no simultaneous moves, etc.)
+		bool isPlayingHuman = false;
+		//if its playing humans, play slower (no simultaneous moves, etc.)
 		
-		enum NodeOwner { me, enemy, noone, anyone, notMe}
-		enum RoadExistence { yes, no, any}
+		enum NodeOwner
+		{
+			me,
+			enemy,
+			noone,
+			anyone,
+			notMe
+
+		}
+		enum RoadExistence
+		{
+			yes,
+			no,
+			any
+
+		}
 		
-		public AI(string name, Color color, 
-		          int buildTick, int mainTick, Rectangle gameWorld, List<Player> players)
+		public AI(string name, Color color, Rectangle gameWorld, List<Player> players)
 			: base(name, color, gameWorld)
 		{
-			this.buildTickInterval = buildTick;
-			this.mainTickInterval = mainTick;
 			base.is_AI = true;
 			Random r;
 			for (int i = 0; i < 3; i++) {
@@ -42,15 +53,15 @@ namespace Constellation
 				strategySpots.Add(c);
 			}
 			
-			foreach (Player p in players) 
-			{
+			foreach (Player p in players) {
 				if (!p.is_AI)
 					isPlayingHuman = true;
 			}
 			
 		}
 		List<int> strategySpots = new List<int>();
-		List<Node> allFacs; //all factories in the game
+		List<Node> allFacs;
+		//all factories in the game
 		bool strategy_setup = false;
 		List<Road> roads;
 		
@@ -94,7 +105,7 @@ namespace Constellation
 					return; //SLOWS DOWN FOR HUMANS
 						
 			}
-				
+			//capturing new nodes...
 			foreach (Node fac in allFacs) {	
 				//expand && capture neutral allFacs
 				//NOTE: a lot of checks can be avoided b/c if factory owner is null, that means
@@ -109,10 +120,10 @@ namespace Constellation
 					if (x != null && y != null) {
 						if (NetNearbyIncoming(x) <= 0) { //if i'm not under attack
 							//if i'm stronger
-							if (x.armyStrength - 3* roadCost > y.armyStrength
+							if (x.armyStrength - 3 * roadCost > y.armyStrength
 							    //or if i'm closer and nearly equal or greater strength
 							    || UTILS.DistSquared(x.loc, fac.loc) < UTILS.DistSquared(y.loc, fac.loc)
-							   && x.armyStrength + 5 > y.armyStrength) {
+							    && x.armyStrength + 5 > y.armyStrength) {
 								
 								TryBuildNewRoad(x, fac, roads);
 								if (this.isPlayingHuman)
@@ -144,7 +155,7 @@ namespace Constellation
 						if (n <= 0)
 							continue;
 							
-						if (RoadBetween(fac, enemy) != null) {//if road exists
+						if (Network.RoadBetween(fac, enemy) != null) {//if road exists
 							SendArmy(fac, enemy, n);
 							if (this.isPlayingHuman)
 								return; //SLOWS DOWN FOR HUMANS
@@ -219,7 +230,7 @@ namespace Constellation
 		}
 
 		/// <summary>
-		/// calculates how much help to send
+		/// Calculates how much help to send
 		/// </summary>
 		/// <param name="source"></param>
 		/// <param name="sink"></param>
@@ -236,52 +247,47 @@ namespace Constellation
 			    && source.armyStrength > 19
 
 			    //don't reinforce things too far away
-			    && NewUnits(source, sink) <= 40)
-			{
+			    && Network.NewUnits(source, sink) <= 40) {
 
 				bool danger = false;
-				foreach (Node f in source.nodesConnected)
-				{
+				foreach (Node f in source.nodesConnected) {
 					//check if i'm in danger --> self-preservation first
 					if (f.owner != this && UTILS.DistSquared(f.loc, source.loc) <
 					    UTILS.DistSquared(source.loc, sink.loc)
 					    && 7 * f.armyStrength / 8 + NetNearbyIncoming(source) > source.armyStrength)
-						
 						danger = true;
 				}
 
 				//if need to send reinforcement ==============FOR COMBAT
-				if (!danger)
-				{
+				if (!danger) {
 					//prioritize combat before harvesting!!
-					if (NEED > 0)
-					{
+					if (NEED > 0) {
 						if (source.armyStrength / 2 > NEED)
 							return 2;
 						else if (3 * source.armyStrength / 4 > NEED)
 							return 3;
 						else if (7 * source.armyStrength / 8 > NEED)
 							return 4;
-						else return 0;
+						else
+							return 0;
 					}
 
 					float sourceEnemies = 0;
 					float sinkEnemies = 0;
-					foreach (Node f in source.nodesConnected)
-					{
+					foreach (Node f in source.nodesConnected) {
 						//calculate power of possible attack
-						float a = NewUnits(f, source);
-						if (f.owner != this) sourceEnemies += f.armyStrength - a;
+						float a = Network.NewUnits(f, source);
+						if (f.owner != this)
+							sourceEnemies += f.armyStrength - a;
 					}
-					foreach (Node f in sink.nodesConnected)
-					{
+					foreach (Node f in sink.nodesConnected) {
 						//calculate power of possible attack
-						float a = NewUnits(f, source);
-						if (f.owner != this) sinkEnemies += f.armyStrength - a;
+						float a = Network.NewUnits(f, source);
+						if (f.owner != this)
+							sinkEnemies += f.armyStrength - a;
 					}
 
-					if (sinkEnemies > sourceEnemies)
-					{
+					if (sinkEnemies > sourceEnemies) {
 						//prevention of enemy attack by coagulating at possible intersects of attack
 						return 2;
 
@@ -344,7 +350,8 @@ namespace Constellation
 			
 			if (dist > UTILS.DistSquared(enemyofFriend.loc, friend.loc)) {
 				SendArmy(me, friend, 4); //sendAll
-				if(this.isPlayingHuman) return true; //SLOWS DOWN FOR HUMANS
+				if (this.isPlayingHuman)
+					return true; //SLOWS DOWN FOR HUMANS
 			}
 			return false;
 		}
@@ -363,7 +370,7 @@ namespace Constellation
 				
 				for (int i = 0; i < f.nodesConnected.Count; i++) {
 					Node f2 = f.nodesConnected[i];
-					Road r = RoadBetween(f, f2);
+					Road r = Network.RoadBetween(f, f2);
 					
 					if (f2.roadsConnected.Count <= 1//less requirements for destination
 					    || f2.owner != this) //never upgrade to the enemy
@@ -385,7 +392,8 @@ namespace Constellation
 					    && f2.roadsConnected.Count > 1) {
 						if (TryDestroyRoad(f, f2, r, roads)) {
 							
-							if(this.isPlayingHuman) return true; //SLOWS DOWN FOR HUMANS
+							if (this.isPlayingHuman)
+								return true; //SLOWS DOWN FOR HUMANS
 							
 							i--;
 							continue;
@@ -398,7 +406,8 @@ namespace Constellation
 					    && .25 * f.armyStrength > roadCost) //upgrade only if lots of armies to spare
 						
 						TryUpgradeRoad(f, f2, r);
-						if(this.isPlayingHuman) return true; //SLOWS DOWN FOR HUMANS
+					if (this.isPlayingHuman)
+						return true; //SLOWS DOWN FOR HUMANS
 				}
 				
 			}
@@ -416,27 +425,27 @@ namespace Constellation
 
 			if (attacker.owner == this
 			    && toAttack.owner != this
-			    && NetNearbyIncoming(attacker) <= 0) //make sure I'm not being attacked
-			{
+			    && NetNearbyIncoming(attacker) <= 0) { //make sure I'm not being attacked
 				
 				int road_expense = 0;
 				//take into account cost of building a new road
-				if (RoadBetween(attacker, toAttack) == null) road_expense = roadCost;
+				if (Network.RoadBetween(attacker, toAttack) == null)
+					road_expense = roadCost;
 				
 				//prevents building road to enemy and not attacking
-				if (attacker.armyStrength < road_expense + minArmySize) 
+				if (attacker.armyStrength < road_expense + minArmySize)
 					return 0;
 
 				//enemy strength sum
-				float N = toAttack.armyStrength + 
-					NewUnits(attacker, toAttack) + 
-					road_expense +
-					NetNearbyIncoming(toAttack);
+				float N = toAttack.armyStrength +
+				          Network.NewUnits(attacker, toAttack) +
+				          road_expense +
+				          NetNearbyIncoming(toAttack);
 
 				//if already being attacked successfully
-				if (N < 0 ) return 0;
-				else
-				{
+				if (N < 0)
+					return 0;
+				else {
 					//only attack if i am nearly sure to win
 					if (.75 * attacker.armyStrength > N)
 						return 4; //sendAll
@@ -445,57 +454,17 @@ namespace Constellation
 			return 0;
 		}
 		
-		float NumTravelTicks(Node start, Node end)
-		{
-			//so if used in reinforcement senses, no reinforcements will come
-			if (RoadBetween(start, end) != null)
-				return UTILS.Distance(start.loc, end.loc) / RoadBetween(start, end).travelSpeed;
-			else
-			{
-				//imagine road was built, calculate odds --> will build later if good choice?
-				Road r = new Road(start, end, RoadTypes.Dirt);
-				return UTILS.Distance(start.loc, end.loc) / r.travelSpeed;
-			}
-		}
-		/// <summary>
-		/// calculates how many new units will be produced by the time help arrives
-		/// </summary>
-		/// <param name="start"></param>
-		/// <param name="end"></param>
-		/// <returns></returns>
-		float NewUnits(Node start, Node end)
-		{
-			return NumTravelTicks(start, end) * mainTickInterval / buildTickInterval;
-		}
-		
-		/// <summary>
-		/// returns the road between the two allFacs, if any
-		/// </summary>
-		/// <param name="start"></param>
-		/// <param name="end"></param>
-		/// <returns></returns>
-		Road RoadBetween(Node start, Node end)
-		{
-			foreach (Road r in start.roadsConnected) {
-				if (r.endpoints.Contains(end))
-					return r;
-			}
-			return null;
-		}
-		
 		Node ClosestNodeTo(Node fromThis, RoadExistence mustHaveRoad, NodeOwner f_owner)
 		{
 			//slight optimization
 			List<Node> f_temp;
-			if(mustHaveRoad == RoadExistence.yes)
-			{
+			if (mustHaveRoad == RoadExistence.yes) {
 				f_temp = UTILS.GetClosestList(fromThis.loc, fromThis.nodesConnected);
-			}		
-			else
+			} else
 				f_temp = UTILS.GetClosestList(fromThis.loc, allFacs);
 			
 			foreach (Node f in f_temp) {
-				if (f == fromThis) //closest fac can't be itself!
+				if (f == fromThis) //closest fac can't be itself
 					continue;
 				if (f_owner == NodeOwner.me && f.owner == this ||
 				    f_owner == NodeOwner.enemy && f.owner != this && f.owner != null ||
@@ -503,8 +472,8 @@ namespace Constellation
 				    f_owner == NodeOwner.anyone ||
 				    f_owner == NodeOwner.notMe && f.owner != this) {
 					
-					if (mustHaveRoad == RoadExistence.no && RoadBetween(fromThis, f) == null
-					   || mustHaveRoad == RoadExistence.any) {
+					if (mustHaveRoad == RoadExistence.no && Network.RoadBetween(fromThis, f) == null
+					    || mustHaveRoad == RoadExistence.any) {
 										
 						return f;
 					}
@@ -521,12 +490,13 @@ namespace Constellation
 		/// <returns></returns>
 		Node ClosestNodeOf(NodeOwner f_owner, RoadExistence mustHaveRoad)
 		{
-			float d = 2000*2000; Node closestFac=null;
+			float d = 2000 * 2000;
+			Node closestFac = null;
 
 			foreach (Node myFac in this.nodesOwned) {
 				foreach (Node f in allFacs) {
-					if (mustHaveRoad == RoadExistence.yes && RoadBetween(myFac, f) != null
-					    || mustHaveRoad == RoadExistence.no && RoadBetween(myFac, f) == null
+					if (mustHaveRoad == RoadExistence.yes && Network.RoadBetween(myFac, f) != null
+					    || mustHaveRoad == RoadExistence.no && Network.RoadBetween(myFac, f) == null
 					    || mustHaveRoad == RoadExistence.any) {
 						
 						if (f_owner == NodeOwner.me && f.owner == this ||
@@ -565,7 +535,6 @@ namespace Constellation
 					//and if not counterproductive
 				    && .8 * UTILS.DistSquared(mid.loc, end.loc)
 				    < UTILS.DistSquared(start.loc, end.loc))
-					
 					intermediate = mid;
 			}
 			return intermediate;
@@ -603,10 +572,10 @@ namespace Constellation
 		/// <param name="num"></param>
 		void SendArmy(Node start, Node end, int num)
 		{	
-			Road r = RoadBetween(start, end);
+			Road r = Network.RoadBetween(start, end);
 			
-			if (r == null 
-			    || start.armyStrength < minArmySize //don't send small armies
+			if (r == null
+			    || start.armyStrength < minArmySize//don't send small armies
 			    || start == end)
 				return;
 			
@@ -622,38 +591,32 @@ namespace Constellation
 		
 		//---------------------------------------------these are not the absolute closest factory
 		//to the certain location strategic point, they have been purposely "fuzzied up"
-		Node CenterMostFac
-		{
-			get
-			{
+		Node CenterMostFac {
+			get {
 				Point p = new Point(gameWorld.Width / 2, gameWorld.Height / 2);
 				return UTILS.GetClosest(p, allFacs);
 			}
 		}
 		Node LeftMostFac {
-			get
-			{
+			get {
 				Point p = new Point(0, gameWorld.Height / 2);
 				return UTILS.GetClosest(p, allFacs);
 			}
 		}
 		Node RightMostFac {
-			get
-			{
+			get {
 				Point p = new Point(gameWorld.Width, gameWorld.Height / 2);
 				return UTILS.GetClosest(p, allFacs);
 			}
 		}
 		Node TopMostFac {
-			get
-			{
+			get {
 				Point p = new Point(gameWorld.Width / 2, 0);
 				return UTILS.GetClosest(p, allFacs);
 			}
 		}
 		Node BottomMostFac {
-			get
-			{
+			get {
 				Point p = new Point(gameWorld.Width / 2, gameWorld.Height);
 				return UTILS.GetClosest(p, allFacs);
 			}
