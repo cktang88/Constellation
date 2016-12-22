@@ -28,9 +28,8 @@ namespace Constellation
 			: base(name, color, gameWorld)
 		{
 			base.is_AI = true;
-			Random r;
+			Random r = new Random(DateTime.Now.Millisecond);
 			for (int i = 0; i < 3; i++) {
-				r = new Random();
 				int c = r.Next(1, 5);
 				while (strategySpots.Contains(c))
 					c = r.Next(1, 5);
@@ -44,9 +43,8 @@ namespace Constellation
 			
 		}
 		List<int> strategySpots = new List<int>();
-		//all factories in the game
 		bool strategy_setup = false;
-		List<Road> roads;
+		
 		
 		public void Do()
 		{
@@ -62,33 +60,15 @@ namespace Constellation
 			
 			//initial strategy setup of spreading forces
 			if (!strategy_setup) {
-				if (TopMostFac.owner == null && strategySpots.Contains(1))
-					TryBuildNewRoad(ClosestNodeTo(TopMostFac, RoadExistence.no,
-						NodeOwner.me), TopMostFac);
-				else if (BottomMostFac.owner == null && strategySpots.Contains(2)) {
-					TryBuildNewRoad(ClosestNodeTo(BottomMostFac, RoadExistence.no,
-						NodeOwner.me), BottomMostFac);
-				} else if (LeftMostFac.owner == null && strategySpots.Contains(3)) {
-					TryBuildNewRoad(ClosestNodeTo(LeftMostFac, RoadExistence.no,
-						NodeOwner.me), LeftMostFac);
-				} else if (RightMostFac.owner == null && strategySpots.Contains(4)) {
-					TryBuildNewRoad(ClosestNodeTo(RightMostFac, RoadExistence.no,
-						NodeOwner.me), RightMostFac);
-				} else if (CenterMostFac.owner == null && strategySpots.Contains(5)) {
-					TryBuildNewRoad(ClosestNodeTo(CenterMostFac, RoadExistence.no,
-						NodeOwner.me), CenterMostFac);
-				} else
-					strategy_setup = true;
-				
-				if (this.isPlayingHuman)
-					return; //SLOWS DOWN FOR HUMANS
-						
+				this.MacroStrategy();
 			}
-			//capturing new nodes...
+			
 			foreach (Node fac in Game.factorynodes) {	
-				//expand && capture neutral Game.factorynodes
-				//NOTE: a lot of checks can be avoided b/c if factory owner is null, that means
-				//that no player owns it, and therefore there are no roads connected to it!
+				
+				#region ===== CAPTURE NEW NODES =====
+				
+				//NOTE: many checks avoided b/c if factory owner is null, that means
+				//that no player owns it, so no roads connected to it.
 				if (fac.owner == null && strategy_setup) {
 					//my closest factory to "fac" that has no roads between them
 					Node x = ClosestNodeTo(fac, RoadExistence.no, NodeOwner.me);
@@ -115,7 +95,8 @@ namespace Constellation
 							TryBuildNewRoad(x, fac);
 					}
 				}
-					
+				
+				#endregion
 					
 				#region =====   ARMY MOVEMENT   =====
 				if (fac.owner == this) {
@@ -139,8 +120,7 @@ namespace Constellation
 							if (this.isPlayingHuman)
 								return; //SLOWS DOWN FOR HUMANS
 						} else {
-							/* if there is a friendly node that i can pass my army to that ...
-							 * ... will allow it to attack enemy, don't build new road
+							/* would rather pass army through intermediate node to destination than build new road
 							 */
 							Node intermediate = Network.GetIntermediate(this, fac, enemy, NodeOwner.me);
 							
@@ -213,7 +193,7 @@ namespace Constellation
 		/// </summary>
 		/// <param name="source"></param>
 		/// <param name="sink"></param>
-		/// <returns>number of armies to send (1/2, 1/4, 1/8, etc)</returns>
+		/// <returns>fraction of armies to send (1/2, 1/4, 1/8, etc)</returns>
 		int ArmiesToHelp(Node source, Node sink)
 		{
 			int NEED = NetNearbyIncoming(sink) - sink.armyStrength;
@@ -237,7 +217,7 @@ namespace Constellation
 						danger = true;
 				}
 
-				//if need to send reinforcement ==============FOR COMBAT
+				//if need to send reinforcement (combat)
 				if (!danger) {
 					//prioritize combat before harvesting!!
 					if (NEED > 0) {
@@ -267,7 +247,7 @@ namespace Constellation
 					}
 
 					if (sinkEnemies > sourceEnemies) {
-						//prevention of enemy attack by coagulating at possible intersects of attack
+						//prevent of enemy attack by coagulating at possible intersects of attack
 						return 2;
 
 					}
@@ -297,19 +277,21 @@ namespace Constellation
 					friend = fac;
 					enemyofFriend = temp;
 					break;
-				} else {
-					//if no friends directly connected to enemy, get the one that is closest to enemy
-					temp = ClosestNodeTo(fac, RoadExistence.no, NodeOwner.enemy);
-					if (temp == null)
-						continue;
-					float d = UTILS.DistSquared(fac.loc, temp.loc);
-					
-					if (distSquared > d) {
-						distSquared = d;
-						friend = fac;
-						enemyofFriend = temp;
-					}
 				}
+				
+				
+				//if no friends directly connected to enemy, get the one that is closest to enemy
+				temp = ClosestNodeTo(fac, RoadExistence.no, NodeOwner.enemy);
+				if (temp == null)
+					continue;
+				float d = UTILS.DistSquared(fac.loc, temp.loc);
+					
+				if (distSquared > d) {
+					distSquared = d;
+					friend = fac;
+					enemyofFriend = temp;
+				}
+				
 			}
 			if (friend == null)
 				return false;
@@ -375,7 +357,6 @@ namespace Constellation
 								return true; //SLOWS DOWN FOR HUMANS
 							
 							i--;
-							continue;
 						}
 					}
 					
@@ -424,11 +405,11 @@ namespace Constellation
 				//if already being attacked successfully
 				if (N < 0)
 					return 0;
-				else {
-					//only attack if i am nearly sure to win
-					if (.75 * attacker.armyStrength > N)
-						return 4; //sendAll
-				}
+				
+				//only attack if i am nearly sure to win
+				if (.75 * attacker.armyStrength > N)
+					return 4; //sendAll
+				
 			}
 			return 0;
 		}
@@ -463,14 +444,36 @@ namespace Constellation
 		{
 			return Network.ClosestNodeTo(this, fromThis, mustHaveRoad, f_owner);
 		}
-		private int NetNearbyIncoming(Node f, int maxdist = 300){
+		private int NetNearbyIncoming(Node f, int maxdist = 300)
+		{
 			return Network.NetNearbyIncoming(this, f, maxdist);
 		}
 		
-		#region center-, left-, right-, top-, bottom- most Game.factorynodes
+		void MacroStrategy()
+		{
+			if (TopMostFac.owner == null && strategySpots.Contains(1))
+				TryBuildNewRoad(ClosestNodeTo(TopMostFac, RoadExistence.no,
+					NodeOwner.me), TopMostFac);
+			else if (BottomMostFac.owner == null && strategySpots.Contains(2)) {
+				TryBuildNewRoad(ClosestNodeTo(BottomMostFac, RoadExistence.no,
+					NodeOwner.me), BottomMostFac);
+			} else if (LeftMostFac.owner == null && strategySpots.Contains(3)) {
+				TryBuildNewRoad(ClosestNodeTo(LeftMostFac, RoadExistence.no,
+					NodeOwner.me), LeftMostFac);
+			} else if (RightMostFac.owner == null && strategySpots.Contains(4)) {
+				TryBuildNewRoad(ClosestNodeTo(RightMostFac, RoadExistence.no,
+					NodeOwner.me), RightMostFac);
+			} else if (CenterMostFac.owner == null && strategySpots.Contains(5)) {
+				TryBuildNewRoad(ClosestNodeTo(CenterMostFac, RoadExistence.no,
+					NodeOwner.me), CenterMostFac);
+			} else
+				strategy_setup = true;
+				
+			if (this.isPlayingHuman)
+				return; //SLOWS DOWN FOR HUMANS
+		}
 		
-		//---------------------------------------------these are not the absolute closest factory
-		//to the certain location strategic point, they have been purposely "fuzzied up"
+		#region center-, left-, right-, top-, bottom- most Game.factorynodes
 		Node CenterMostFac {
 			get {
 				Point p = new Point(gameWorld.Width / 2, gameWorld.Height / 2);
