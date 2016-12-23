@@ -54,6 +54,7 @@
         	this.showStatsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
         	this.pauseToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
         	this.colorDialog1 = new System.Windows.Forms.ColorDialog();
+        	this.lightDarkToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
         	this.menuStrip1.SuspendLayout();
         	this.SuspendLayout();
         	// 
@@ -108,9 +109,10 @@
 			this.playToolStripMenuItem,
 			this.vsAIToolStripMenuItem,
 			this.movieModeToolStripMenuItem,
-			this.changeColorsToolStripMenuItem1});
+			this.changeColorsToolStripMenuItem1,
+			this.lightDarkToolStripMenuItem});
         	this.sETTINGSToolStripMenuItem.Name = "sETTINGSToolStripMenuItem";
-        	this.sETTINGSToolStripMenuItem.Size = new System.Drawing.Size(204, 30);
+        	this.sETTINGSToolStripMenuItem.Size = new System.Drawing.Size(211, 30);
         	this.sETTINGSToolStripMenuItem.Text = "SETTINGS";
         	// 
         	// playToolStripMenuItem
@@ -148,7 +150,7 @@
 			this.hexGridToolStripMenuItem,
 			this.spiralToolStripMenuItem1});
         	this.largeMapToolStripMenuItem.Name = "largeMapToolStripMenuItem";
-        	this.largeMapToolStripMenuItem.Size = new System.Drawing.Size(204, 30);
+        	this.largeMapToolStripMenuItem.Size = new System.Drawing.Size(211, 30);
         	this.largeMapToolStripMenuItem.Text = "Large Map";
         	// 
         	// randomToolStripMenuItem1
@@ -179,7 +181,7 @@
 			this.hourglassToolStripMenuItem1,
 			this.starToolStripMenuItem1});
         	this.mediumMapToolStripMenuItem.Name = "mediumMapToolStripMenuItem";
-        	this.mediumMapToolStripMenuItem.Size = new System.Drawing.Size(204, 30);
+        	this.mediumMapToolStripMenuItem.Size = new System.Drawing.Size(211, 30);
         	this.mediumMapToolStripMenuItem.Text = "Medium Map";
         	// 
         	// combToolStripMenuItem1
@@ -210,7 +212,7 @@
 			this.challenge8ToolStripMenuItem1,
 			this.templeToolStripMenuItem1});
         	this.smallMapToolStripMenuItem.Name = "smallMapToolStripMenuItem";
-        	this.smallMapToolStripMenuItem.Size = new System.Drawing.Size(204, 30);
+        	this.smallMapToolStripMenuItem.Size = new System.Drawing.Size(211, 30);
         	this.smallMapToolStripMenuItem.Text = "Small Map";
         	// 
         	// simpleToolStripMenuItem1
@@ -254,6 +256,13 @@
         	this.colorDialog1.Color = System.Drawing.Color.Silver;
         	this.colorDialog1.SolidColorOnly = true;
         	// 
+        	// lightDarkToolStripMenuItem
+        	// 
+        	this.lightDarkToolStripMenuItem.Name = "lightDarkToolStripMenuItem";
+        	this.lightDarkToolStripMenuItem.Size = new System.Drawing.Size(213, 30);
+        	this.lightDarkToolStripMenuItem.Text = "Light/Dark";
+        	this.lightDarkToolStripMenuItem.Click += new System.EventHandler(this.LightDarkToolStripMenuItemClick);
+        	// 
         	// Form1
         	// 
         	this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
@@ -268,7 +277,6 @@
         	this.Name = "Form1";
         	this.Text = "Constellation";
         	this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
-        	this.Load += new System.EventHandler(this.Form1_Load);
         	this.Paint += new System.Windows.Forms.PaintEventHandler(this.Form1_Paint);
         	this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.Form1_KeyDown);
         	this.KeyUp += new System.Windows.Forms.KeyEventHandler(this.Form1_KeyUp);
@@ -309,6 +317,7 @@
         private System.Windows.Forms.ToolStripMenuItem simpleToolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem challenge8ToolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem templeToolStripMenuItem1;
+        private System.Windows.Forms.ToolStripMenuItem lightDarkToolStripMenuItem;
     }
 }
 

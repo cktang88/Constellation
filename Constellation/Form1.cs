@@ -7,8 +7,6 @@ namespace Constellation
 {
 	public partial class Form1 : Form
 	{
-		// game modes
-		bool sendAll = false;
 
 		int[] speeds = { 1, 2, 5 };
         
@@ -32,17 +30,23 @@ namespace Constellation
 			theme = Theme.dark;
 			this.BackColor = Color.Black;
 
-			NewGame(1);
+			NewGame(1, BoardType.Random);
           
 		}
 
 		private void tmr_creation_Tick(object sender, EventArgs e)
 		{
+			if(game==null)
+				return;
+			
 			game.BuildUpArmies();
 		}
 
 		private void tmr_main_Tick(object sender, EventArgs e)
 		{
+			if(game==null)
+				return;
+				
 			if (game.Go(tmr_main.Interval) != null) {
 				tmr_creation.Enabled = false;
 				tmr_main.Enabled = false;
@@ -90,8 +94,6 @@ namespace Constellation
             
 		}
 		
-
-        
 		private void Form1_KeyDown(object sender, KeyEventArgs e)
 		{
 			if (e.KeyCode == Keys.Z)
@@ -103,7 +105,7 @@ namespace Constellation
 
 			// must hold down
 			if (e.KeyCode == Keys.ShiftKey) {
-				sendAll = true;
+				Game.sendAll = true;
 			}
             
 			if (e.KeyCode == Keys.M)
@@ -127,10 +129,10 @@ namespace Constellation
 		{
 			end = e.Location;
 			current = end;
-			game.MouseSlide(start, end, mousemode, sendAll);
+			game.MouseSlide(start, end, mousemode);
             
 			//resets toggles to default
-			sendAll = false;
+			Game.sendAll = false;
 			mousemode = MouseMode.SendArmy;
 
 		}
@@ -140,8 +142,6 @@ namespace Constellation
 			current = e.Location;
 			game.MouseUpdate(current);
 		}
-        
-		BoardType boardtype = BoardType.Random;
         
 
 		private void pauseToolStripMenuItem_Click(object sender, EventArgs e)
@@ -153,7 +153,7 @@ namespace Constellation
 			this.tmr_creation.Enabled = !tmr_creation.Enabled;
 			this.tmr_main.Enabled = !this.tmr_main.Enabled;
 		}
-		public void NewGame(int numPlayers)
+		public void NewGame(int numPlayers, BoardType boardtype = BoardType.Same)
 		{
 			//reset timer
 			tmr_creation.Interval = 250;
@@ -162,7 +162,7 @@ namespace Constellation
 			Game.BUILDTICK = tmr_creation.Interval;
 			Game.MAINTICK = tmr_main.Interval;
 			
-			game = new Game(boardtype, numPlayers);
+			game = new Game(numPlayers, boardtype);
 		}
 
 		private void vsAIToolStripMenuItem_Click(object sender, EventArgs e)
@@ -175,15 +175,6 @@ namespace Constellation
 			NewGame(2);
 		}
 
-
-		// deprecated due end use of image background
-		/*
-        private void lightDarkToolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-            if (theme == Theme.light) {theme = Theme.dark; this.BackColor= Color.Black;}
-            else if (theme == Theme.dark) { theme = Theme.light; this.BackColor = SystemColors.Control; }
-        }
-         */
 
 		private void changeColorsToolStripMenuItem1_Click(object sender, EventArgs e)
 		{
@@ -215,67 +206,64 @@ namespace Constellation
 		}
 		private void randomToolStripMenuItem1_Click(object sender, EventArgs e)
 		{
-			boardtype = BoardType.Random;
-			NewGame(game.Numplayers);
+			NewGame(game.Numplayers, BoardType.Random);
 		}
 
 		private void hexGridToolStripMenuItem_Click(object sender, EventArgs e)
 		{
-			boardtype = BoardType.HexGrid;
-			NewGame(game.Numplayers);
+			NewGame(game.Numplayers, BoardType.HexGrid);
 		}
 
 		private void spiralToolStripMenuItem1_Click(object sender, EventArgs e)
 		{
-			boardtype = BoardType.Spiral;
-			NewGame(game.Numplayers);
+			NewGame(game.Numplayers, BoardType.Spiral);
 		}
 
 		private void combToolStripMenuItem1_Click(object sender, EventArgs e)
 		{
-			boardtype = BoardType.Comb;
-			NewGame(game.Numplayers);
+			NewGame(game.Numplayers, BoardType.Comb);
 		}
 
 		private void hourglassToolStripMenuItem1_Click(object sender, EventArgs e)
 		{
-			boardtype = BoardType.Hourglass;
-			NewGame(game.Numplayers);
+			NewGame(game.Numplayers, BoardType.Hourglass);
 		}
 
 		private void starToolStripMenuItem1_Click(object sender, EventArgs e)
 		{
-			boardtype = BoardType.Star;
-			NewGame(game.Numplayers);
+			NewGame(game.Numplayers, BoardType.Star);
 		}
 
 		private void simpleToolStripMenuItem1_Click(object sender, EventArgs e)
 		{
-			boardtype = BoardType.Simple;
-			NewGame(game.Numplayers);
+			NewGame(game.Numplayers, BoardType.Simple);
 		}
 
 		private void challenge8ToolStripMenuItem1_Click(object sender, EventArgs e)
 		{
-			boardtype = BoardType.Challenge8;
-			NewGame(game.Numplayers);
+			NewGame(game.Numplayers, BoardType.Challenge8);
 		}
 
 		private void templeToolStripMenuItem1_Click(object sender, EventArgs e)
 		{
-			boardtype = BoardType.Temple;
-			NewGame(game.Numplayers);
-		}
-
-		private void Form1_Load(object sender, EventArgs e)
-		{
-
+			NewGame(game.Numplayers, BoardType.Temple);
 		}
 
 		private void Form1_KeyUp(object sender, KeyEventArgs e)
 		{
 			// reset all if no key pressed
-			sendAll = false;
+			Game.sendAll = false;
+		}
+		void LightDarkToolStripMenuItemClick(object sender, EventArgs e)
+		{
+			if (theme == Theme.light) {
+				theme = Theme.dark;
+				this.BackColor = Color.Black;
+			} else if (theme == Theme.dark) {
+				theme = Theme.light;
+				this.BackColor = SystemColors.Control;
+			}
+	
 		}
         
 	}

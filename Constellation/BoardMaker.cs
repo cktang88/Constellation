@@ -6,7 +6,7 @@ using System.Drawing;
 namespace Constellation
 {
 	/// <summary>
-	/// Description of BoardMaker.
+	/// Makes game boards
 	/// </summary>
 	public static class BoardMaker
 	{
@@ -56,13 +56,11 @@ namespace Constellation
 					float radius;
 					for (float i = 0; i < 3 * Math.PI; i += (float)(2 * Math.PI / 17)) {
 						radius = (float)(100 * Math.Sqrt(i));
-						fac_LocList.Add(
-							midpoint + new Size((int)Math.Floor(radius * Math.Cos(i)),
-								(int)Math.Floor(radius * Math.Sin(i))));
-
-						fac_LocList.Add(
-							midpoint + new Size((int)Math.Floor(-radius * Math.Cos(i)),
-								(int)Math.Floor(-radius * Math.Sin(i))));
+						int x = (int)Math.Floor(radius * Math.Cos(i));
+						int y = (int)Math.Floor(radius * Math.Sin(i));
+						
+						fac_LocList.Add(midpoint + new Size(x, y));
+						fac_LocList.Add(midpoint + new Size(-x, -y));
 					}
 					break;
 				case BoardType.Simple:
@@ -88,11 +86,13 @@ namespace Constellation
 					}
 					break;
 				case BoardType.Hourglass:
+					/*
 					for (int i = gameWorld.X; i < gameWorld.Width; i += 80) {
 						for (int j = 0; j < (int)Math.Floor((decimal)gameWorld.Height / 2); j += 80) {
                         
 						}
 					}
+					*/
 					break;
 				case BoardType.Challenge8:
 					for (int i = 1; i < 3; i++) {
@@ -142,6 +142,9 @@ namespace Constellation
 		Hourglass,
 		Star,
 		Temple,
-		Challenge8
+		Challenge8,
+		
+		//use same board type as previous game
+		Same
 	}
 }

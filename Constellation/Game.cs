@@ -17,6 +17,8 @@ namespace Constellation
 
 		Form1 form;
 		BoardType boardtype;
+		public static bool sendAll;
+		
 		public int Numplayers{ get; private set; }
 		//Sounds backgroundSound = new Sounds();
 		Renderer renderer;
@@ -27,7 +29,7 @@ namespace Constellation
 		public static int BUILDTICK;
 		public static int MAINTICK;
 
-		public Game(BoardType boardtype, int Numplayers)
+		public Game(int Numplayers, BoardType boardtype)
 		{
 			Game.players = new List<Player>();
 			Game.factorynodes = new List<Node>();
@@ -35,7 +37,12 @@ namespace Constellation
         	
 			renderer = new Renderer(Theme.light);
 			r = new Random(); 
-			this.boardtype = boardtype; 
+			
+			//NOTE: if boardtype is boardtype.same, keep old board type
+			if (boardtype != BoardType.Same)
+				this.boardtype = boardtype;
+			
+			
 			this.Numplayers = Numplayers;
 			
 			//========setup a good game screen to fit device
@@ -56,15 +63,14 @@ namespace Constellation
 			// Create game board
 			List<Point> fac_LocList = BoardMaker.MakeBoard(boardtype, this.gameWorld);
 			//and this pins a factory node end each pre-determined location of factories..
-			foreach (Point p in fac_LocList) {
-				factorynodes.Add(new Node(p, null, this));
+			foreach (Point loc in fac_LocList) {
+				factorynodes.Add(new Node(loc));
 			}
 			//add player nodes
 			AddPlayerStartNodes();
 		}
 		public void AddPlayerStartNodes()
 		{
-			Random r = new Random();
 			foreach (Player	p in players) {
 				int c = r.Next(1, factorynodes.Count);
 				if (factorynodes[c].owner == null) {
@@ -169,7 +175,7 @@ namespace Constellation
 		{
 			target = UTILS.GetClosest(mouse, factorynodes);
 		}
-		public void MouseSlide(Point mouseStart, Point mouseEnd, MouseMode mousemode, bool sendAll)
+		public void MouseSlide(Point mouseStart, Point mouseEnd, MouseMode mousemode)
 		{
 			//gets closest endpoint factory end where mouse let go
 			Node fac_end = UTILS.GetClosest(mouseEnd, factorynodes);
@@ -189,7 +195,7 @@ namespace Constellation
 			if (fac_start.owner != null)
 				COST = fac_start.owner.roadCost;
                 
-			//can't use foreach b/c might be modified by DestroyRoad() or UpgradeRoad()
+			//can't use foreach b/c modified by DestroyRoad() or UpgradeRoad()
 			for (int i = 0; i < fac_start.roadsConnected.Count; i++) { 	
 				//finds the road that connects the two things that is owned by player
 				Road road = fac_start.roadsConnected[i];

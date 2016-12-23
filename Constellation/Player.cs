@@ -64,8 +64,8 @@ namespace Constellation
 				foreach (Army a in myArmy.road.armies) {
 					//proximity check for fighting
 					if (UTILS.DistSquared(myArmy.loc, a.loc) < Math.Pow(myArmy.radius + a.radius, 2)
-					    && myArmy.road == a.road //and on same road
-					   	&& myArmy.owner != a.owner) { //is enemy
+					    && myArmy.road == a.road//and on same road
+					    && myArmy.owner != a.owner) { //is enemy
 						particleEmitters.Add(new ParticleEmitter(
 							new Point((a.loc.X + a.loc.X) / 2,
 								(a.loc.Y + a.loc.Y) / 2),
@@ -88,32 +88,32 @@ namespace Constellation
 		public bool TryBuildNewRoad(Node start, Node end)
 		{
 			//checks if can legitimately build new road
-			if (start == null 
-			    || start == end 
+			if (start == null
+			    || start == end
 			    || start.owner != this)
 				return false;
 			
 			
 			foreach (Road r in start.roadsConnected) {
+				//already has road
 				if (r.Connects(start, end))
-					return false; //already has road
+					return false;
 			}
 
-			if (start.armyStrength >= start.owner.roadCost)//if enough money
-			{
-				start.armyStrength -= start.owner.roadCost;
-				NewRoad(start, end);
-				return true;
-			}
-			return false;
+			//if enough money
+			if (!start.TrySubtract(start.owner.roadCost))
+				return false;
+			   
+			NewRoad(start, end);
+			return true;
             
 		}
 		public bool TryDestroyRoad(Node start, Node end, Road r)
 		{
 			//free
 			if (r.Connects(start, end)
-			    && start.owner ==this && end.owner==this
-			    && r.armies.Count==0) { //and if noone is on the road
+			    && start.owner == this && end.owner == this
+			    && r.armies.Count == 0) { //and if noone is on the road
 
 				DestroyRoad(r);
 				return true;
@@ -123,31 +123,29 @@ namespace Constellation
 		public bool TryUpgradeRoad(Node start, Node end, Road r)
 		{
 			if (r.Connects(start, end)
-			    && start.owner !=null
-			    && start.armyStrength >= start.owner.roadCost) {
+			    && start.owner != null
+			    && start.TrySubtract(start.owner.roadCost)) {
 				
-				start.armyStrength -= start.owner.roadCost;
 				UpgradeRoad(r);
 				return true;
 			}
 			return false;
 		}
 		
-        #region possible road commands
-        public void UpgradeRoad(Road r)
-        {
-            r.Upgrade();
-        }
-        public void DestroyRoad(Road r)
-        {
-            foreach (Node f in r.endpoints)
-	        {		 
-            	//update factory's info of connections
-                f.roadsConnected.Remove(r);
-                f.nodesConnected.Remove(r.endpoints[1-r.endpoints.IndexOf(f)]);
-            }
-            Game.roads.Remove(r);
-        }
+		#region possible road commands
+		public void UpgradeRoad(Road r)
+		{
+			r.Upgrade();
+		}
+		public void DestroyRoad(Road r)
+		{
+			foreach (Node f in r.endpoints) {		 
+				//update factory's info of connections
+				f.roadsConnected.Remove(r);
+				f.nodesConnected.Remove(r.endpoints[1 - r.endpoints.IndexOf(f)]);
+			}
+			Game.roads.Remove(r);
+		}
 		public void NewRoad(Node start, Node end)
 		{
 			Road r = new Road(start, end, RoadTypes.Dirt);
@@ -171,10 +169,11 @@ namespace Constellation
 			
 		}
 		
-		public virtual void Do(){
+		public virtual void Do()
+		{
 			
 		}
-        #endregion
+		#endregion
 
 	}
 }

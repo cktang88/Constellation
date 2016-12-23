@@ -59,7 +59,7 @@
     <Compile Include="Form1.cs" />
     <Compile Include="Form1.Designer.cs" />
     <Compile Include="Game.cs" />
-    <Compile Include="Particle.cs" />
+    <Compile Include="ParticleEmitter.cs" />
     <Compile Include="Player.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
