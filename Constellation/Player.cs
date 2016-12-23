@@ -170,6 +170,10 @@ namespace Constellation
 			}
 			
 		}
+		
+		public virtual void Do(){
+			
+		}
         #endregion
 
 	}

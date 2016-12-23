@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Drawing;
 using System.Windows.Forms;
+using System.Collections.Generic;
 
 namespace Constellation
 {
@@ -154,7 +155,14 @@ namespace Constellation
 		}
 		public void NewGame(int numPlayers)
 		{
-			game = new Game(boardtype, tmr_creation.Interval, tmr_main.Interval, numPlayers);
+			//reset timer
+			tmr_creation.Interval = 250;
+			tmr_main.Interval = 50;
+			
+			Game.BUILDTICK = tmr_creation.Interval;
+			Game.MAINTICK = tmr_main.Interval;
+			
+			game = new Game(boardtype, numPlayers);
 		}
 
 		private void vsAIToolStripMenuItem_Click(object sender, EventArgs e)
@@ -275,26 +283,12 @@ namespace Constellation
 	{
 		SendArmy,
 		UpgradeRoads,
-		DestroyRoads}
-
-	;
+		DestroyRoads
+	}
 	public enum Theme
 	{
 		light,
-		dark}
-
-	;
-	public enum BoardType
-	{
-		Random,
-		HexGrid,
-		Spiral,
-		Simple,
-		Comb,
-		Hourglass,
-		Star,
-		Temple,
-		Challenge8}
-
-	;
+		dark
+	}
+	
 }

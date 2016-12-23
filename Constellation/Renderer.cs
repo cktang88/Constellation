@@ -5,14 +5,13 @@ using System.Drawing;
 
 namespace Constellation
 {
-    public class Renderer
-    {
-        Theme theme;
-        bool showStats;
+	public class Renderer
+	{
+		Theme theme;
+		bool showStats;
 		Graphics g;
 		Color c {
-			get
-			{
+			get {
 				if (theme == Theme.dark)
 					return Color.White;
 				else
@@ -20,15 +19,20 @@ namespace Constellation
 			}
 		}
 
-        String fontStyle = "Microsoft Sans Serif";
+		String fontStyle = "Microsoft Sans Serif";
+		
+		List<ParticleEmitter> particleEmitters = new List<ParticleEmitter>();
         
-        
-        public Renderer(Theme theme, bool showStats = false)
-        {
-            this.theme = theme; this.showStats = showStats;
-        }
-        public static void DrawParticles(Graphics g, ParticleEmitter partEmit)
-        {
+		public Renderer(Theme theme, bool showStats = false)
+		{
+			this.theme = theme;
+			this.showStats = showStats;
+		}
+		public void AddParticleEmitter(ParticleEmitter pe){
+			this.particleEmitters.Add(pe);
+		}
+		public static void DrawParticles(Graphics g, ParticleEmitter partEmit)
+		{
 			//draws all particles start particleEmitters
 			foreach (Particle p in partEmit.particles) {
 				Color col = Color.FromArgb(Math.Max(255 - Convert.ToInt32(p.age / p.lifetime * 255), 0), p.color);
@@ -39,11 +43,12 @@ namespace Constellation
 				}
 			}
 
-        }
-        public void UpdateInfo(bool showStats, Theme theme)
-        {
-            this.showStats = showStats; this.theme = theme;
-        }
+		}
+		public void UpdateInfo(bool showStats, Theme theme)
+		{
+			this.showStats = showStats;
+			this.theme = theme;
+		}
 		public void Render(Game game, Graphics g)
 		{
 			List<Player> players = Game.players;
@@ -54,9 +59,24 @@ namespace Constellation
 			//===================== temp vars
 			int gameXright = game.gameWorld.Width + game.gameWorld.X;
 			//=====================
-
-
-			foreach (ParticleEmitter pe in game.particleEmitters) {
+				
+				//particle engine
+			for (int i = 0; i < particleEmitters.Count; i++) {
+					particleEmitters[i].MoveParticles();
+            	
+					//clean up old particle emitters
+					if (particleEmitters[i].particles.Count <= 1) {
+						particleEmitters.RemoveAt(i);
+						i--;
+					}           	
+				}
+            
+			//actual movements and updates for all players
+			foreach (Player p in players) {
+				p.Update(this.particleEmitters);              
+			}
+			
+			foreach (ParticleEmitter pe in particleEmitters) {
 				DrawParticles(g, pe);
 			}
 
@@ -64,7 +84,7 @@ namespace Constellation
 				//Brush b = new SolidBrush(Color.FromArgb(128, p.color));
 				
 				foreach (Player p in Game.players) {
-                    Brush b = new SolidBrush(p.color);
+					Brush b = new SolidBrush(p.color);
 
 					using (Font font = new Font(fontStyle, 16F)) {
 						g.DrawString(p.numFactories + " *", font, b,
@@ -111,47 +131,47 @@ namespace Constellation
 				Draw(r);
 
 		}
-        public void DrawTarget(Node facNode)
-        {
-            int radius = facNode.radius + 10;
-            Point loc = facNode.loc;
-            Color c;
-            if (facNode.owner==null || facNode.owner.color !=Color.Lime) c = Color.Lime;
-            else c = Color.Cyan;
-            g.FillEllipse(new SolidBrush(c), loc.X - facNode.anim, loc.Y - facNode.anim,
-                    2 * facNode.anim, 2 * facNode.anim);
-        }
-        public void Draw(Node facNode)
-        {
-            //draw factory nodes
+		public void DrawTarget(Node facNode)
+		{
+			int radius = facNode.radius + 10;
+			Point loc = facNode.loc;
+			Color c;
+			if (facNode.owner == null || facNode.owner.color != Color.Lime)
+				c = Color.Lime;
+			else
+				c = Color.Cyan;
+			g.FillEllipse(new SolidBrush(c), loc.X - facNode.anim, loc.Y - facNode.anim,
+				2 * facNode.anim, 2 * facNode.anim);
+		}
+		public void Draw(Node facNode)
+		{
+			//draw factory nodes
 
-            //===================== temp vars
-            int radius = facNode.radius;
-            Point loc = facNode.loc;
+			//===================== temp vars
+			int radius = facNode.radius;
+			Point loc = facNode.loc;
             
-            //=====================
+			//=====================
 
-            if (facNode.owner == null)
-            {
-                //can't use temp var for anim or direction, because anim must UPDATE!!!
-                if (facNode.anim <= 2) facNode.direction = 1;
-                else if (facNode.anim >= radius) facNode.direction = -1;
-                facNode.anim += facNode.direction * .2f;
+			if (facNode.owner == null) {
+				//can't use temp var for anim or direction, because anim must UPDATE!!!
+				if (facNode.anim <= 2)
+					facNode.direction = 1;
+				else if (facNode.anim >= radius)
+					facNode.direction = -1;
+				facNode.anim += facNode.direction * .2f;
                 
                 
-                g.FillEllipse(new SolidBrush(c), loc.X - facNode.anim, loc.Y - facNode.anim,
-                    2 * facNode.anim, 2 * facNode.anim);
-            }
+				g.FillEllipse(new SolidBrush(c), loc.X - facNode.anim, loc.Y - facNode.anim,
+					2 * facNode.anim, 2 * facNode.anim);
+			} else {
+				Color color = facNode.owner.color;
+				g.FillEllipse(new SolidBrush(color), loc.X - radius / 2, loc.Y - radius / 2,
+					radius, radius);
 
-            else
-            {
-            	Color color = facNode.owner.color;
-                g.FillEllipse(new SolidBrush(color), loc.X - radius/2, loc.Y - radius/2,
-                    radius, radius);
-
-                g.FillEllipse(new SolidBrush(Color.FromArgb(48, color)),
-                    loc.X - radius/2, loc.Y - radius/2,
-                    radius, radius);
+				g.FillEllipse(new SolidBrush(Color.FromArgb(48, color)),
+					loc.X - radius / 2, loc.Y - radius / 2,
+					radius, radius);
                  
 
 				//eventually, remove numbers alltogether?
@@ -160,8 +180,8 @@ namespace Constellation
 					g.DrawString(facNode.armyStrength.ToString(), font,
 						new SolidBrush(color), facNode.loc.X + radius, facNode.loc.Y);
 				}
-            }
-        }
+			}
+		}
 		public void Draw(Road road)
 		{
 			int a = (int)road.rdtype;
@@ -212,25 +232,24 @@ namespace Constellation
 		}
 
 
-        //
-        //=========== helper methods ===============
-        //
+		//
+		//=========== helper methods ===============
+		//
 
-        //end rotate sets of points
-        void Rotate(PointF[] points, PointF center, float degreesCounterClockwise)
-        {
-            float ang = degreesCounterClockwise;
+		//end rotate sets of points
+		void Rotate(PointF[] points, PointF center, float degreesCounterClockwise)
+		{
+			float ang = degreesCounterClockwise;
             
-            for (int i = 0; i < points.Count(); i++)
-            {
+			for (int i = 0; i < points.Count(); i++) {
 				float halfPi = 1.5708f; //Math.PI/2
 				
-                float ang_orig = (float)Math.Atan2(points[i].Y - center.Y, points[i].X - center.X)-halfPi;
-                points[i] = new PointF(
-                    UTILS.Distance(points[i], center) * (float)Math.Cos(ang+ang_orig) + center.X,
-                    UTILS.Distance(points[i], center) * (float)Math.Sin(ang+ang_orig) + center.Y);
-            }
-        }
+				float ang_orig = (float)Math.Atan2(points[i].Y - center.Y, points[i].X - center.X) - halfPi;
+				points[i] = new PointF(
+					UTILS.Distance(points[i], center) * (float)Math.Cos(ang + ang_orig) + center.X,
+					UTILS.Distance(points[i], center) * (float)Math.Sin(ang + ang_orig) + center.Y);
+			}
+		}
         
-    }
+	}
 }

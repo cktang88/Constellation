@@ -16,15 +16,16 @@ namespace Constellation
 	 */
 	public class AI : Player
 	{
+		//for slowing down for humans
 		int TimeUntilNextMove = 0;
 		
-		int minArmySize = 60;
 		//prevents many spammy tiny armies
+		int minArmySize = 60;
 		
-		bool isPlayingHuman = false;
 		//if its playing humans, play slower (no simultaneous moves, etc.)
+		bool isPlayingHuman = false;
 		
-		public AI(string name, Color color, Rectangle gameWorld, List<Player> players)
+		public AI(string name, Color color, Rectangle gameWorld)
 			: base(name, color, gameWorld)
 		{
 			base.is_AI = true;
@@ -36,7 +37,7 @@ namespace Constellation
 				strategySpots.Add(c);
 			}
 			
-			foreach (Player p in players) {
+			foreach (Player p in Game.players) {
 				if (!p.is_AI)
 					isPlayingHuman = true;
 			}
@@ -45,17 +46,153 @@ namespace Constellation
 		List<int> strategySpots = new List<int>();
 		bool strategy_setup = false;
 		
+		/// <summary>
+		/// Capture new nodes
+		/// Immediately returns after making one move
+		/// </summary>
+		/// <param name="fac">Any factory on the board</param>
+		/// <returns>Returns if move was made</returns>
+		bool CaptureNewNodes(Node fac)
+		{
+				
+			//Only try to capture neutral nodes, and after strategy setup
+			if (fac.owner != null || !strategy_setup)
+				return false;
+			
+			//my closest factory to "fac" that has no roads between them
+			Node x = ClosestNodeTo(fac, RoadExistence.no, NodeOwner.me);
+					
+			//the closest enemy factory to "fac", roads or not
+			Node y = ClosestNodeTo(fac, RoadExistence.no, NodeOwner.enemy);
+				
+			if (x != null && y != null) {
+				if (NetNearbyIncoming(x) <= 0) { //if i'm not under attack
+					//if i'm stronger
+					if (x.armyStrength - 3 * roadCost > y.armyStrength
+							    //or if i'm closer and nearly equal or greater strength
+					    || UTILS.DistSquared(x.loc, fac.loc) < UTILS.DistSquared(y.loc, fac.loc)
+					    && x.armyStrength + 5 > y.armyStrength) {
+								
+						TryBuildNewRoad(x, fac);
+						if (this.isPlayingHuman)
+							return true;
+					}
+				}
+						
+				//allow AI to get the 1st move
+				if (y.owner.numFactories == 1)
+					TryBuildNewRoad(x, fac);
+			}
+			
+			return true;
+			
+		}
 		
-		public void Do()
+		/// <summary>
+		/// Move armies
+		/// Immediately returns after making one move
+		/// </summary>
+		/// <param name="fac">My factory</param>
+		/// <returns>Returns if move was made</returns>
+		bool MoveArmies(Node fac)
+		{
+			if (fac.owner != this)
+				return false;
+			
+			List<Node> f_temporary = UTILS.GetClosestList(fac.loc, Game.factorynodes);
+			foreach (Node enemy in f_temporary) {
+						
+				//verify target is an enemy
+				if (enemy.owner == this || enemy.owner == null)
+					continue;
+						
+				//only directly attack nearby things
+				if (UTILS.DistSquared(fac.loc, enemy.loc) > 300 * 300)
+					continue;
+
+				int n = ArmiesToSend(fac, enemy);
+				if (n <= 0)
+					continue;
+							
+				if (Network.RoadBetween(fac, enemy) != null) {//if road exists
+					SendArmy(fac, enemy, n);
+					if (isPlayingHuman)
+						return true;
+				} else {
+					/* would rather pass army through intermediate node to destination than build new road
+							 */
+					Node intermediate = Network.GetIntermediate(this, fac, enemy, NodeOwner.me);
+							
+					if (intermediate != null) {
+						SendArmy(fac, intermediate, n);
+						if (isPlayingHuman)
+							return true;
+					} else if (TryBuildNewRoad(fac, enemy)) {
+						SendArmy(fac, enemy, n);
+						if (isPlayingHuman)
+							return true;
+					}
+								
+				}
+			}
+						
+			//"big clumps" quickly build & upgrade quick roads to attack enemies
+			if (fac.armyStrength >= 200) {
+				int sum = 0;
+				foreach (Node n in fac.nodesConnected) {
+					if (n.owner == fac.owner)
+						sum += n.armyStrength;
+				}
+				if (fac.armyStrength > 4 * sum) {
+					Node enemy = ClosestNodeTo(fac, RoadExistence.any, NodeOwner.enemy);
+					if (enemy != null) {
+						if (fac.armyStrength * .8 > enemy.armyStrength//if strong enough
+								    //&& fac.nodesConnected.Count <= 2//it is isolated
+						    && UTILS.DistSquared(fac.loc, enemy.loc) < 300 * 300) { //if nearby
+									
+							TryBuildNewRoad(fac, enemy);
+							SendArmy(fac, enemy, 4);
+							if (isPlayingHuman)
+								return true;
+									
+						} else if (fac.nodesConnected.Count == 1) { //if at end of a network
+
+							//"bridge the gap" to nearest friend closer to frontlines								
+							Node friend = ClosestNodeTo(fac, RoadExistence.no, NodeOwner.me);
+							if (UTILS.DistSquared(fac.loc, enemy.loc) >
+							    UTILS.DistSquared(friend.loc, enemy.loc)) {
+										
+								TryBuildNewRoad(fac, friend);
+								SendArmy(fac, friend, 4);
+								if (isPlayingHuman)
+									return true;
+							}
+						}
+					}
+				}
+			}
+						
+			//TODO: make use of ArmiesToHelp() method!!!! for reinforcing
+						
+						
+			if (Harvest(fac) && isPlayingHuman) //harvests from fac
+					return true;
+			
+			return false;
+			
+		}
+		
+		public override void Do()
 		{
 			
 			if (isPlayingHuman) {
-				//one move per second?
 				TimeUntilNextMove--;
-				if (TimeUntilNextMove > 0) //wait until i can move again, to prevent moving too much
-				return;
-			
-				TimeUntilNextMove = 30; //reset timer to move
+				//move cooldown
+				if (TimeUntilNextMove > 0)
+					return;
+				else
+					//reset cooldown
+					TimeUntilNextMove = 30;
 			}
 			
 			//initial strategy setup of spreading forces
@@ -65,123 +202,14 @@ namespace Constellation
 			
 			foreach (Node fac in Game.factorynodes) {	
 				
-				#region ===== CAPTURE NEW NODES =====
-				
-				//NOTE: many checks avoided b/c if factory owner is null, that means
-				//that no player owns it, so no roads connected to it.
-				if (fac.owner == null && strategy_setup) {
-					//my closest factory to "fac" that has no roads between them
-					Node x = ClosestNodeTo(fac, RoadExistence.no, NodeOwner.me);
+				//slow down - one move per turn for humans
+				if (CaptureNewNodes(fac) && isPlayingHuman)
+					return;
 					
-					//the closest enemy factory to "fac", roads or not
-					Node y = ClosestNodeTo(fac, RoadExistence.no, NodeOwner.enemy);
-				
-					if (x != null && y != null) {
-						if (NetNearbyIncoming(x) <= 0) { //if i'm not under attack
-							//if i'm stronger
-							if (x.armyStrength - 3 * roadCost > y.armyStrength
-							    //or if i'm closer and nearly equal or greater strength
-							    || UTILS.DistSquared(x.loc, fac.loc) < UTILS.DistSquared(y.loc, fac.loc)
-							    && x.armyStrength + 5 > y.armyStrength) {
-								
-								TryBuildNewRoad(x, fac);
-								if (this.isPlayingHuman)
-									return; //SLOWS DOWN FOR HUMANS
-							}
-						}
-						
-						//allow AI to get the 1st move
-						if (y.owner.numFactories == 1)
-							TryBuildNewRoad(x, fac);
-					}
-				}
-				
-				#endregion
-					
-				#region =====   ARMY MOVEMENT   =====
 				if (fac.owner == this) {
-					List<Node> f_temporary = UTILS.GetClosestList(fac.loc, Game.factorynodes);
-					foreach (Node enemy in f_temporary) {
-						
-						//verify target is an enemy
-						if (enemy.owner == this || enemy.owner == null)
-							continue;
-						
-						//only directly attack nearby things
-						if (UTILS.DistSquared(fac.loc, enemy.loc) > 300 * 300)
-							continue;
-
-						int n = ArmiesToSend(fac, enemy);
-						if (n <= 0)
-							continue;
-							
-						if (Network.RoadBetween(fac, enemy) != null) {//if road exists
-							SendArmy(fac, enemy, n);
-							if (this.isPlayingHuman)
-								return; //SLOWS DOWN FOR HUMANS
-						} else {
-							/* would rather pass army through intermediate node to destination than build new road
-							 */
-							Node intermediate = Network.GetIntermediate(this, fac, enemy, NodeOwner.me);
-							
-							if (intermediate != null) {
-								SendArmy(fac, intermediate, n);
-								if (this.isPlayingHuman)
-									return; //SLOWS DOWN FOR HUMANS
-							} else if (TryBuildNewRoad(fac, enemy)) {
-								SendArmy(fac, enemy, n);
-								if (this.isPlayingHuman)
-									return; //SLOWS DOWN FOR HUMANS
-							}
-								
-						}
-					}
-						
-					//"big clumps" quickly build & upgrade quick roads to attack enemies
-					if (fac.armyStrength >= 200) {
-						int sum = 0;
-						foreach (Node n in fac.nodesConnected) {
-							if (n.owner == fac.owner)
-								sum += n.armyStrength;
-						}
-						if (fac.armyStrength > 4 * sum) {
-							Node enemy = ClosestNodeTo(fac, RoadExistence.any, NodeOwner.enemy);
-							if (enemy != null) {
-								if (fac.armyStrength * .8 > enemy.armyStrength//if strong enough
-								    //&& fac.nodesConnected.Count <= 2//it is isolated
-								    && UTILS.DistSquared(fac.loc, enemy.loc) < 300 * 300) { //if nearby
-									
-									TryBuildNewRoad(fac, enemy);
-									SendArmy(fac, enemy, 4);
-									
-									if (this.isPlayingHuman)
-										return; //SLOWS DOWN FOR HUMANS
-									
-								} else if (fac.nodesConnected.Count == 1) { //if at end of a network
-
-									//"bridge the gap" to nearest friend closer to frontlines								
-									Node friend = ClosestNodeTo(fac, RoadExistence.no, NodeOwner.me);
-									if (UTILS.DistSquared(fac.loc, enemy.loc) >
-									    UTILS.DistSquared(friend.loc, enemy.loc)) {
-										
-										TryBuildNewRoad(fac, friend);
-										SendArmy(fac, friend, 4);
-										
-										if (this.isPlayingHuman)
-											return; //SLOWS DOWN FOR HUMANS
-									}
-								}
-							}
-						}
-					}
-						
-					//TODO: make use of ArmiesToHelp() method!!!! for reinforcing
-						
-						
-					if (Harvest(fac) && isPlayingHuman) //harvests from fac
-						return; //SLOWS DOWN FOR HUMAN
+					if (MoveArmies(fac) && isPlayingHuman)
+						return;
 				}
-				#endregion
 			}
 			
 			if (OptimizeRoads() && isPlayingHuman)
@@ -317,7 +345,7 @@ namespace Constellation
 			return false;
 		}
 		/// <summary>
-		/// upgrades useful roads and deletes inefficient ones
+		/// Upgrades useful roads, deletes inefficient ones
 		/// </summary>
 		/// <returns>Whether a move was made (if playing vs human)</returns>
 		bool OptimizeRoads()
@@ -341,11 +369,7 @@ namespace Constellation
 					
 					
 					/*
-					 * Deleting roads can be useful!
-					 * 1. looks better
-					 * 2. prevents AI from wasting computations
-					 * 3. AI algorithms work better b/c will only use short roads to travel on
-					 * 
+					 * Deleting roads improves algorithm performance
 					 */
 					if (lengthSquared > 400 * 400
 					    //never leave a node unconnected
