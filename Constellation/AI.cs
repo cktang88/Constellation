@@ -138,41 +138,11 @@ namespace Constellation
 						
 			//"big clumps" quickly build & upgrade quick roads to attack enemies
 			if (fac.armyStrength >= 200) {
-				int sum = 0;
-				foreach (Node n in fac.nodesConnected) {
-					if (n.owner == fac.owner)
-						sum += n.armyStrength;
-				}
-				if (fac.armyStrength > 4 * sum) {
-					Node enemy = ClosestNodeTo(fac, RoadExistence.any, NodeOwner.enemy);
-					if (enemy != null) {
-						if (fac.armyStrength * .8 > enemy.armyStrength//if strong enough
-								    //&& fac.nodesConnected.Count <= 2//it is isolated
-						    && UTILS.DistSquared(fac.loc, enemy.loc) < 300 * 300) { //if nearby
-									
-							TryBuildNewRoad(fac, enemy);
-							SendArmy(fac, enemy, 4);
-							if (isPlayingHuman)
-								return true;
-									
-						} else if (fac.nodesConnected.Count == 1) { //if at end of a network
-
-							//"bridge the gap" to nearest friend closer to frontlines								
-							Node friend = ClosestNodeTo(fac, RoadExistence.no, NodeOwner.me);
-							if (UTILS.DistSquared(fac.loc, enemy.loc) >
-							    UTILS.DistSquared(friend.loc, enemy.loc)) {
-										
-								TryBuildNewRoad(fac, friend);
-								SendArmy(fac, friend, 4);
-								if (isPlayingHuman)
-									return true;
-							}
-						}
-					}
-				}
+				if (ActOnBigClump(fac))
+					return true;
 			}
 						
-			//TODO: make use of ArmiesToHelp() method!!!! for reinforcing
+			//TODO: make use of ArmiesToHelp() for reinforcing
 						
 						
 			if (Harvest(fac) && isPlayingHuman) //harvests from fac
@@ -180,6 +150,43 @@ namespace Constellation
 			
 			return false;
 			
+		}
+		
+		bool ActOnBigClump(Node fac)
+		{
+			int sum = 0;
+			foreach (Node n in fac.nodesConnected) {
+				if (n.owner == fac.owner)
+					sum += n.armyStrength;
+			}
+			if (fac.armyStrength > 4 * sum) {
+				Node enemy = ClosestNodeTo(fac, RoadExistence.any, NodeOwner.enemy);
+				if (enemy != null) {
+					if (fac.armyStrength * .8 > enemy.armyStrength//if strong enough
+								    //&& fac.nodesConnected.Count <= 2//it is isolated
+					    && UTILS.DistSquared(fac.loc, enemy.loc) < 300 * 300) { //if nearby
+									
+						TryBuildNewRoad(fac, enemy);
+						SendArmy(fac, enemy, 4);
+						if (isPlayingHuman)
+							return true;
+									
+					} else if (fac.nodesConnected.Count == 1) { //if at end of a network
+
+						//"bridge the gap" to nearest friend closer to frontlines								
+						Node friend = ClosestNodeTo(fac, RoadExistence.no, NodeOwner.me);
+						if (UTILS.DistSquared(fac.loc, enemy.loc) >
+						    UTILS.DistSquared(friend.loc, enemy.loc)) {
+										
+							TryBuildNewRoad(fac, friend);
+							SendArmy(fac, friend, 4);
+							if (isPlayingHuman)
+								return true;
+						}
+					}
+				}
+			}
+			return false;
 		}
 		
 		public override void Do()
