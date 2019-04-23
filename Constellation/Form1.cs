@@ -153,7 +153,7 @@ namespace Constellation
 			this.tmr_creation.Enabled = !tmr_creation.Enabled;
 			this.tmr_main.Enabled = !this.tmr_main.Enabled;
 		}
-		public void NewGame(int numPlayers, BoardType boardtype = BoardType.Same)
+		public void NewGame(int numPlayers, BoardType newboardtype = BoardType.Same)
 		{
 			//reset timer
 			tmr_creation.Interval = 250;
@@ -162,7 +162,10 @@ namespace Constellation
 			Game.BUILDTICK = tmr_creation.Interval;
 			Game.MAINTICK = tmr_main.Interval;
 			
-			game = new Game(numPlayers, boardtype);
+			if (newboardtype == BoardType.Same) {
+				newboardtype = game.boardtype;
+			}
+			game = new Game(numPlayers, newboardtype);
 		}
 
 		private void vsAIToolStripMenuItem_Click(object sender, EventArgs e)

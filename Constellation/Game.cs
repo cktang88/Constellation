@@ -16,7 +16,7 @@ namespace Constellation
 		#region initial setup
 
 		Form1 form;
-		BoardType boardtype;
+		public BoardType boardtype;
 		public static bool sendAll;
 		
 		public int Numplayers{ get; private set; }
